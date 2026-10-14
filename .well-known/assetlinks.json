@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "art.ball.calc.twa",
+        "sha256_cert_fingerprints": ["31:07:53:DB:B3:60:EF:1B:A7:CD:F6:FE:F7:5E:0C:AE:52:CC:4E:CD:1A:FA:BC:3B:07:71:E1:5E:EF:21:0D:FF"]
+      }
+    }]
