@@ -149,6 +149,7 @@ input:checked + .slider:before {
 .night-theme h1, .night-theme h2, .night-theme h3, .night-theme h4,
 .night-theme .section-title, .night-theme .subtitle,
 .night-theme .result-label, .night-theme .result-value,
+.night-theme .odo-cell, .night-theme .odo-static,
 .night-theme .modal-content h3, .night-theme .login-card h2,
 .night-theme .restart-section h3 {
   color: #e8e8ea !important;
@@ -178,7 +179,10 @@ input:checked + .slider:before {
 .night-theme ::placeholder { color: #a2a2a7 !important; }
 .night-theme input:focus,
 .night-theme select:focus,
-.night-theme textarea:focus { border-color: #a5a5ac !important; }
+.night-theme textarea:focus {
+  border-color: #00BFFF !important;
+  box-shadow: 0 6px 18px rgba(0, 191, 255, 0.18) !important;
+}
 
 /* Таблица истории */
 .night-theme .history-table th,
@@ -190,6 +194,20 @@ input:checked + .slider:before {
   background: rgba(14, 14, 16, 0.9) !important;
   color: #ffffff !important;
   text-shadow: none !important;
+}
+.night-theme .history-table tbody tr:active {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Детали истории в модальном окне для ночной темы */
+.night-theme .history-detail-item {
+  background: rgba(38, 38, 43, 0.85) !important;
+  border-left-color: #888890 !important;
+  color: #e4e4e8 !important;
+}
+.night-theme .modal-detail p {
+  color: #dcdce0 !important;
+  border-bottom-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* QR-ссылка и статусные плашки */
