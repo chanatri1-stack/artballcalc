@@ -1221,7 +1221,7 @@ const SECRET_KEY = SECRET_KEY_PART1 + SECRET_KEY_PART2;
 // ====================================================================
 
 const APP_PIN = '1945';
-const APP_VERSION = '9.0.7';
+const APP_VERSION = '9.0.8';
 
 // ====================================================================
 // ==== DATA MOVED TO SEPARATE FILE data.js ===========================
