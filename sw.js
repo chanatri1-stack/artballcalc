@@ -1,4 +1,4 @@
-const CACHE_NAME = 'artballcalc-v9.0.4';
+const CACHE_NAME = 'artballcalc-v9.0.5';
 const ASSETS = [
   './app.html',
   './veiw.html',
