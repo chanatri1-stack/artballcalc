@@ -2,63 +2,67 @@
 
 /* --- Фикс бегунков: убираем "квадратик с галочкой" нативный чекбокс --- */
 .toggle-switch input[type="checkbox"] {
-    position: absolute;
-    opacity: 0;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    cursor: pointer;
-    z-index: 1;
-    appearance: none;
-    -webkit-appearance: none;
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+  z-index: 1;
+  appearance: none;
+  -webkit-appearance: none;
 }
 input:checked + .slider {
-    background-color: #00BFFF;
+  background-color: #00BFFF;
 }
 input:checked + .slider:before {
-    transform: translateX(24px);
-    -webkit-transform: translateX(24px);
+  transform: translateX(24px);
+  -webkit-transform: translateX(24px);
 }
 
-/* --- Слои фона с плавным кроссфейдом --- */
+/* --- Слои фона с плавным кроссфейдом (аппаратное ускорение GPU без дерганий при открытии клавиатуры) --- */
 #bg-day, #bg-night {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    z-index: 0;
-    transition: opacity 2s ease-in-out;
-    will-change: opacity;
-    pointer-events: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: var(--app-height, 100vh);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 0;
+  transition: opacity 2s ease-in-out;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  pointer-events: none;
 }
-#bg-day   { background-image: url('../bg.webp');   opacity: 1; }
+#bg-day { background-image: url('../bg.webp'); opacity: 1; }
 #bg-night { background-image: url('../bg_2.webp'); opacity: 0; }
-.night-theme #bg-day   { opacity: 0; }
+.night-theme #bg-day { opacity: 0; }
 .night-theme #bg-night { opacity: 1; }
 
 /* --- Ночной контейнер переключателей --- */
 .night-theme .toggle-container {
-    background: rgba(38, 38, 42, 0.82) !important;
-    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  background: rgba(38, 38, 42, 0.82) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
 }
 .night-theme .toggle-group span {
-    color: #e8e8ea !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+  color: #e8e8ea !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
 }
 .night-theme .charge-ranges {
-    background: rgba(48, 48, 53, 0.65) !important;
-    border-left-color: #66666c !important;
+  background: rgba(48, 48, 53, 0.65) !important;
+  border-left-color: #66666c !important;
 }
 
 /* ---- Ночная тема: тёмно-серые полупрозрачные "окна" + светлый текст ---- */
 .night-theme {
-    --primary: #e4e4e8 !important;
-    --border: #56565c !important;
-    --secondary: #6e6e74 !important;
-    --card-bg: rgba(28, 28, 31, 0.8) !important;
-    color: #eeeeef !important;
+  --primary: #e4e4e8 !important;
+  --border: #56565c !important;
+  --secondary: #6e6e74 !important;
+  --card-bg: rgba(28, 28, 31, 0.8) !important;
+  color: #eeeeef !important;
 }
 .night-theme body { color: #eeeeef; }
 
@@ -69,10 +73,20 @@ input:checked + .slider:before {
 .night-theme .calculator-card,
 .night-theme .history-card,
 .night-theme .modal-content,
+.night-theme .card,
+.night-theme .meta-info,
+.night-theme .loading,
+.night-theme .error,
+.night-theme .empty-state,
+.night-theme h1,
 .night-theme header {
-    background: rgba(28, 28, 31, 0.82) !important;
-    border-color: rgba(255, 255, 255, 0.14) !important;
-    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55) !important;
+  background: rgba(28, 28, 31, 0.82) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55) !important;
+}
+.night-theme header h1 {
+  background: transparent !important;
+  box-shadow: none !important;
 }
 .night-theme .modal-content { background: rgba(16, 16, 18, 0.97) !important; }
 
@@ -80,19 +94,19 @@ input:checked + .slider:before {
 .night-theme #alert-modal h3 { color: #e8e8ea !important; }
 .night-theme #alert-modal .alert-body { color: #ccccce !important; }
 .night-theme #alert-ok-btn {
-    background: #3f3f45 !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  background: #3f3f45 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
 }
 .night-theme #alert-confirm-btn {
-    background: #8c2f23 !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  background: #8c2f23 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
 }
 .night-theme #alert-cancel-btn {
-    background: #3c3c41 !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  background: #3c3c41 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
 }
 
 /* Внутренние светлые плашки -> тёмные полупрозрачные */
@@ -100,35 +114,35 @@ input:checked + .slider:before {
 .night-theme .result-item,
 .night-theme .history-table,
 .night-theme .restart-section {
-    background: rgba(48, 48, 53, 0.65) !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(48, 48, 53, 0.65) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* Окно с результатами расчёта: темнее плашек .result-item внутри него */
 .night-theme .results {
-    background: rgba(24, 24, 27, 0.78) !important;
-    border-left-color: #66666c !important;
+  background: rgba(24, 24, 27, 0.78) !important;
+  border-left-color: #66666c !important;
 }
 
 /* Кнопки и элементы списка */
 .night-theme .btn,
 .night-theme .share-btn,
 .night-theme .weapon-item {
-    background: rgba(52, 52, 58, 0.78) !important;
-    border-color: rgba(255, 255, 255, 0.14) !important;
-    color: #e7e7e9 !important;
+  background: rgba(52, 52, 58, 0.78) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  color: #e7e7e9 !important;
 }
 .night-theme .weapon-btn {
-    background: rgba(22, 22, 25, 0.95) !important;
-    color: #ffffff !important;
-    border-color: rgba(255, 255, 255, 0.14) !important;
+  background: rgba(22, 22, 25, 0.95) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
 }
 .night-theme .weapon-item.active { background: rgba(84, 84, 92, 0.95) !important; color: #fff !important; }
 
 /* Выпадающий список оружия: самое верхнее окно калькулятора (z-index 1000),
    в ночной теме тёмное, как остальные окна */
 .night-theme .weapon-list {
-    background: rgba(22, 22, 25, 0.95) !important;
+  background: rgba(22, 22, 25, 0.95) !important;
 }
 
 /* Заголовки и основные тексты -> светлые */
@@ -137,8 +151,8 @@ input:checked + .slider:before {
 .night-theme .result-label, .night-theme .result-value,
 .night-theme .modal-content h3, .night-theme .login-card h2,
 .night-theme .restart-section h3 {
-    color: #e8e8ea !important;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6) !important;
+  color: #e8e8ea !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6) !important;
 }
 
 /* Вторичный текст -> приглушённо светлый */
@@ -149,17 +163,17 @@ input:checked + .slider:before {
 .night-theme .form-grid label,
 .night-theme .fieldlabel,
 .night-theme footer {
-    color: #a2a2a7 !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+  color: #a2a2a7 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
 }
 
 /* Поля ввода -> тёмные, светлый текст и placeholder */
 .night-theme input,
 .night-theme select,
 .night-theme textarea {
-    background: rgba(58, 58, 64, 0.9) !important;
-    color: #ebebed !important;
-    border-color: rgba(255, 255, 255, 0.2) !important;
+  background: rgba(58, 58, 64, 0.9) !important;
+  color: #ebebed !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
 }
 .night-theme ::placeholder { color: #a2a2a7 !important; }
 .night-theme input:focus,
@@ -169,20 +183,20 @@ input:checked + .slider:before {
 /* Таблица истории */
 .night-theme .history-table th,
 .night-theme .history-table td {
-    color: #ccccce !important;
-    border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #ccccce !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
 }
 .night-theme .history-table thead th {
-    background: rgba(14, 14, 16, 0.9) !important;
-    color: #ffffff !important;
-    text-shadow: none !important;
+  background: rgba(14, 14, 16, 0.9) !important;
+  color: #ffffff !important;
+  text-shadow: none !important;
 }
 
 /* QR-ссылка и статусные плашки */
 .night-theme #qr-link-display {
-    background: rgba(22, 22, 25, 0.9) !important;
-    color: #cbcbcd !important;
-    border-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(22, 22, 25, 0.9) !important;
+  color: #cbcbcd !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
 /* Тумблеры "Краснополь" (inline-стили): в ночи — тёмно-серые, как весь интерфейс;
@@ -190,38 +204,38 @@ input:checked + .slider:before {
 .night-theme div[style*="rgba(255,255,255,0.7)"],
 .night-theme div[style*="rgba(255, 255, 255, 0.7)"],
 .night-theme .redpoly-tumbler {
-    background: rgba(48, 48, 53, 0.78) !important;
-    color: #eeeeef !important;
-    border: 1px solid rgba(255, 255, 255, 0.14) !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45) !important;
+  background: rgba(48, 48, 53, 0.78) !important;
+  color: #eeeeef !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45) !important;
 }
 .night-theme div[style*="var(--red-poly)"],
 .night-theme .redpoly-tumbler.active {
-    background: #2f9e44 !important;
-    color: #2b2b2b !important;
-    border: 2px solid #69c27a !important;
-    box-shadow: 0 4px 12px rgba(47, 158, 68, 0.4) !important;
+  background: #2f9e44 !important;
+  color: #2b2b2b !important;
+  border: 2px solid #69c27a !important;
+  box-shadow: 0 4px 12px rgba(47, 158, 68, 0.4) !important;
 }
 
 /* ==== Ручной ввод: плашки, чипы значений, результаты ==== */
 .night-theme .manual-values-block,
 .night-theme .manual-values-grid,
 .night-theme .manual-value-chip {
-    background: rgba(48, 48, 53, 0.65) !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(48, 48, 53, 0.65) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
 }
 .night-theme .manual-value-chip {
-    background: rgba(48, 48, 53, 0.78) !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45) !important;
+  background: rgba(48, 48, 53, 0.78) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45) !important;
 }
 .night-theme .manual-value-chip .mv-label,
 .night-theme .manual-value-chip .mv-value {
-    color: #eeeeef !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+  color: #eeeeef !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
 }
 .night-theme .manual-values-title {
-    color: #e8e8ea !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+  color: #e8e8ea !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
 }
 
 /* Плавные переходы цветов/тени в ночной теме (день -> ночь) */
@@ -251,12 +265,10 @@ input:checked + .slider:before {
 .night-theme #alert-ok-btn,
 .night-theme #alert-confirm-btn,
 .night-theme #alert-cancel-btn {
-    transition: background-color 1.2s ease, border-color 1.2s ease, color 1.2s ease, box-shadow 1.2s ease;
+  transition: background-color 1.2s ease, border-color 1.2s ease, color 1.2s ease, box-shadow 1.2s ease;
 }
 
-/* Переход цветов в ОБЕ стороны (день <-> ночь): js/theme.js ставит класс
-   theme-switching на body на время переключения темы, поэтому при возврате
-   в дневную тему окна тоже перекрашиваются плавно, а не мгновенно */
+/* Переход цветов в ОБЕ стороны (день <-> ночь) */
 body.theme-switching .login-card,
 body.theme-switching .update-card,
 body.theme-switching .loading-card,
@@ -283,5 +295,5 @@ body.theme-switching #qr-link-display,
 body.theme-switching #alert-ok-btn,
 body.theme-switching #alert-confirm-btn,
 body.theme-switching #alert-cancel-btn {
-    transition: background-color 1.2s ease, border-color 1.2s ease, color 1.2s ease, box-shadow 1.2s ease;
+  transition: background-color 1.2s ease, border-color 1.2s ease, color 1.2s ease, box-shadow 1.2s ease;
 }
