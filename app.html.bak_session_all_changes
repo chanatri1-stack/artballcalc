@@ -1397,7 +1397,7 @@ const SECRET_KEY = SECRET_KEY_PART1 + SECRET_KEY_PART2;
 // ====================================================================
 
 const APP_PIN = '1945';
-const APP_VERSION = '9.2.0';
+const APP_VERSION = '9.3.0';
 
 // ====================================================================
 // ==================== ДАННЫЕ (ОСТАВЛЕНЫ ПУСТЫМИ) ===================
@@ -1662,7 +1662,7 @@ function initializeApp() {
 
     let currentWeapon = null;
     let isFlatTrajectory = false;
-    let calculationHistory = [];
+    let lastCalcMode = 'mortar'; // запоминаем, что считали последним: 'mortar' или 'redpoly'
 
     // Получаем список всех доступных орудий
     function getAvailableWeapons() {
@@ -1732,7 +1732,11 @@ function initializeApp() {
             minD = global.min;
             maxD = global.max;
         } else {
-            let charge = parseInt(document.getElementById('charge').value);
+            const srcForCharge = getCurrentDataSource();
+   const defaultCharge = srcForCharge?.minCharge ?? 0;
+   let charge = document.getElementById('charge').value.trim() === ''
+     ? defaultCharge
+     : parseInt(document.getElementById('charge').value, 10);
             const rangeObj = getChargeRange(charge);
             if (rangeObj) {
                 minD = rangeObj.min;
@@ -2214,7 +2218,11 @@ function initializeApp() {
         let oh = parseFloat(document.getElementById('own-height').value) || 0;
         let th = parseFloat(document.getElementById('target-height').value) || 0;
         let auto = document.getElementById('auto-charge-toggle').checked;
-        let charge = auto ? null : parseInt(document.getElementById('charge').value);
+        const srcForCharge = getCurrentDataSource();
+   const defaultCharge = srcForCharge?.minCharge ?? 0;
+   let charge = document.getElementById('charge').value.trim() === ''
+     ? defaultCharge
+     : parseInt(document.getElementById('charge').value, 10);let charge = auto ? null : (document.getElementById('charge').value.trim() === '' ? null : parseInt(document.getElementById('charge').value, 10));
         try {
             let res = calculateFull(dist, oh, th, charge);
             document.getElementById('mortar-mode').innerText = isFlatTrajectory ? 'Настильный' : 'Мортирный';

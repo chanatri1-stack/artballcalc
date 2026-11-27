@@ -1,0 +1,4947 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, interactive-widget=overlays-content">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#0d1b2a">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <meta name="app-version" content="">
+  
+  <title>Арт. баллистический калькулятор</title>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    :root {
+      --primary: #1e2b3a;
+      --secondary: #4A4A4A;
+      --accent: #e9c46a;
+      --danger: #c44536;
+      --success: #2a9d8f;
+      --light: #f4f9f9;
+      --dark: #0d1b2a;
+      --border: #adb5bd;
+      --card-bg: rgba(255, 255, 255, 0.7);
+      --red-poly: #b23b2c;
+      --orange: #f4a261;
+      --app-height: 100vh;
+      --spring-easing: cubic-bezier(0.34, 1.56, 0.64, 1);
+      --smooth-out: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    body {
+      font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+      background: var(--dark);
+      color: #000000;
+      min-height: var(--app-height, 100vh);
+      padding: 8px;
+      padding-bottom: 35vh;
+      overflow-x: hidden;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: var(--app-height, 100%);
+      background: rgba(0, 0, 0, 0.15);
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    h1, h2, h3, h4, .section-title, .subtitle, .result-label, .result-value {
+      text-shadow: 0 1px 3px rgba(255, 255, 255, 0.5);
+    }
+    
+    #loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: var(--app-height, 100%);
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      padding: 20px;
+      transition: opacity 0.4s ease;
+    }
+    
+    #loading-screen.hidden {
+      display: none;
+    }
+    
+    .loading-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 28px;
+      padding: 32px 24px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.3);
+      animation: cardPopIn 0.55s var(--spring-easing) both;
+    }
+    
+    .loading-card .spinner {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 16px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #1e2b3a;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .loading-card h2 {
+      color: var(--primary);
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+    
+    .loading-card .subtitle {
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .loading-card .progress-text {
+      color: #999;
+      font-size: 13px;
+      margin-top: 12px;
+    }
+    
+    .loading-card .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: #f1f3f5;
+      border-radius: 4px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+    
+    .loading-card .progress-bar .fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 4px;
+      width: 0%;
+      transition: width 0.3s;
+    }
+    
+    .loading-card .version {
+      font-size: 11px;
+      color: #ccc;
+      margin-top: 16px;
+    }
+    
+    #update-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: var(--app-height, 100%);
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 10001;
+      padding: 20px;
+    }
+    
+    #update-screen.active {
+      display: flex;
+    }
+    
+    .update-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 28px;
+      padding: 32px 24px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.3);
+      animation: cardPopIn 0.55s var(--spring-easing) both;
+    }
+    
+    .update-card .icon {
+      font-size: 56px;
+      margin-bottom: 12px;
+    }
+    
+    .update-card h2 {
+      color: var(--danger);
+      font-size: 20px;
+      margin-bottom: 12px;
+    }
+    
+    .update-card p {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 12px;
+      line-height: 1.6;
+    }
+    
+    .update-card .version-info {
+      background: rgba(241, 243, 245, 0.7);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+    
+    .update-card .version-info span {
+      display: block;
+      color: var(--primary);
+      font-weight: 600;
+    }
+    
+    .update-card .version-info .new {
+      color: var(--success);
+    }
+    
+    .update-card .lock-icon {
+      font-size: 14px;
+      color: var(--danger);
+      margin-top: 8px;
+      display: block;
+    }
+    
+    #login-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: var(--app-height, 100%);
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      padding: 20px;
+    }
+    
+    #login-screen.active {
+      display: flex;
+    }
+    
+    #login-screen.hidden {
+      display: none;
+    }
+    
+    .login-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 28px;
+      padding: 32px 24px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.3);
+      animation: cardPopIn 0.6s var(--spring-easing) both;
+    }
+
+    .login-card.closing {
+      animation: cardPopOut 0.35s ease forwards;
+    }
+    
+    .login-card .icon {
+      font-size: 56px;
+      text-align: center;
+      margin-bottom: 12px;
+      animation: floatIcon 3s ease-in-out infinite;
+    }
+    
+    .login-card h2 {
+      text-align: center;
+      color: var(--primary);
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+    
+    .login-card .subtitle {
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+    
+    .login-card .input-group {
+      margin-bottom: 16px;
+    }
+    
+    .login-card .input-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+    
+    .login-card .input-group input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid rgba(206, 212, 218, 0.7);
+      border-radius: 30px;
+      font-size: 16px;
+      transition: transform 0.25s var(--spring-easing), border-color 0.2s, box-shadow 0.25s ease, background 0.2s;
+      background: rgba(248, 249, 250, 0.8);
+      text-align: center;
+      letter-spacing: 6px;
+      font-weight: 600;
+    }
+    
+    .login-card .input-group input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: rgba(255, 255, 255, 0.9);
+      transform: translateY(-2px) scale(1.015);
+      box-shadow: 0 8px 20px rgba(30, 43, 58, 0.16);
+    }
+    
+    .login-card .input-group input.error {
+      border-color: var(--danger);
+      background: rgba(255, 242, 240, 0.9);
+      animation: inputShake 0.42s ease;
+    }
+    
+    .login-card .btn {
+      width: 100%;
+      padding: 16px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 40px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s var(--spring-easing), box-shadow 0.2s ease;
+      margin-top: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .login-card .btn:active {
+      transform: scale(0.95);
+    }
+    
+    .login-card .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .login-card .status {
+      text-align: center;
+      font-size: 14px;
+      margin-top: 12px;
+      min-height: 24px;
+    }
+    
+    .login-card .status.success {
+      color: var(--success);
+    }
+    
+    .login-card .status.error {
+      color: var(--danger);
+    }
+    
+    .login-card .status.loading {
+      color: #666;
+    }
+    
+    .login-card .hint {
+      font-size: 12px;
+      color: #999;
+      text-align: center;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(238, 238, 238, 0.5);
+    }
+    
+    #transition-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: var(--app-height, 100%);
+      background: transparent;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9998;
+    }
+    
+    #transition-screen.active {
+      display: flex;
+    }
+    
+    #transition-screen .loading-text {
+      color: white;
+      font-size: 1.4rem;
+      font-weight: 300;
+      text-shadow: 0 2px 30px rgba(0,0,0,0.9);
+      opacity: 0.8;
+      letter-spacing: 3px;
+      background: rgba(0,0,0,0.25);
+      padding: 16px 32px;
+      border-radius: 50px;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.1);
+      animation: pulseText 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes pulseText {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.03); }
+    }
+    
+    #app-container {
+      display: none;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 8px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    #app-container.active {
+      display: block;
+    }
+
+    #app-container.active header {
+      animation: legoBlockDrop 0.55s var(--spring-easing) 0.02s both;
+    }
+    #app-container.active .calculator-card {
+      animation: legoBlockDrop 0.6s var(--spring-easing) 0.10s both;
+    }
+    #app-container.active .history-card {
+      animation: legoBlockDrop 0.65s var(--spring-easing) 0.18s both;
+    }
+    
+    .container {
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    header {
+      background: var(--card-bg);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      padding: 16px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      text-align: center;
+      position: relative;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    
+    header h1 {
+      color: var(--primary);
+      font-size: 1.6rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+      text-shadow: 0 1px 3px rgba(255, 255, 255, 0.8);
+    }
+    
+    .subtitle { 
+      color: var(--primary); 
+      font-size: 0.9rem;
+      font-weight: 500;
+      opacity: 0.8;
+      transition: transform 0.3s var(--spring-easing), opacity 0.25s ease;
+    }
+    
+    .weapon-selector { margin-top: 10px; position: relative; z-index: 200; }
+    .weapon-dropdown { position: relative; perspective: 1000px; }
+    
+    .weapon-btn {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 40px;
+      font-size: 1.1rem;
+      font-weight: 500;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.22s var(--spring-easing), box-shadow 0.22s ease;
+    }
+    
+    .weapon-btn:active { transform: scale(0.96); }
+    .weapon-btn i.fa-chevron-down {
+      transition: transform 0.42s var(--spring-easing);
+    }
+    .weapon-btn.open i.fa-chevron-down {
+      transform: rotate(180deg) scale(1.15);
+    }
+    
+    /* ==== АНИМАЦИЯ СПИСКА ОРУДИЙ "КОНСТРУКТОР" ==== */
+    .weapon-list {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 22px;
+      box-shadow: 0 16px 38px rgba(0,0,0,0.35);
+      z-index: 1000;
+      display: none;
+      border: 2px solid var(--secondary);
+      overflow: hidden;
+      transform-origin: top center;
+      perspective: 900px;
+    }
+    
+    .weapon-list.show {
+      display: block;
+      animation: weaponContainerOpen 0.32s var(--smooth-out) forwards;
+    }
+
+    .weapon-list.closing {
+      display: block;
+      pointer-events: none;
+      animation: weaponContainerClose 0.28s ease-in forwards;
+    }
+    
+    .weapon-item {
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(222, 226, 230, 0.5);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: background 0.18s ease, transform 0.2s var(--spring-easing), padding-left 0.2s ease;
+      color: var(--dark);
+      background: transparent;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+      overflow: hidden;
+      transform-origin: top center;
+      backface-visibility: hidden;
+    }
+
+    .weapon-list.show .weapon-item {
+      opacity: 0;
+      animation: legoItemAssemble 0.46s var(--spring-easing) forwards;
+      animation-delay: calc(var(--item-idx, 0) * 38ms);
+    }
+
+    .weapon-list.closing .weapon-item {
+      animation: legoItemDisassemble 0.22s ease-in forwards;
+      animation-delay: calc(var(--rev-idx, 0) * 20ms);
+    }
+    
+    .weapon-item:hover { background: rgba(75, 83, 32, 0.1); padding-left: 22px; }
+    .weapon-item:active { background: rgba(75, 83, 32, 0.2); transform: scale(0.97); }
+    .weapon-item.active { background: var(--secondary); color: white; }
+    
+    /* ==== Замки и подписи уровней доступа в списке орудий ==== */
+    .weapon-item.locked {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    .weapon-item.locked:hover,
+    .weapon-item.locked:active { background: transparent; padding-left: 18px; }
+    .weapon-item .weapon-lock {
+      margin-left: auto;
+      font-size: 0.9rem;
+      display: inline-block;
+      transition: transform 0.25s ease;
+    }
+    .weapon-item.locked:active .weapon-lock {
+      animation: lockWiggle 0.4s ease;
+    }
+    .weapon-item .weapon-req-level {
+      margin-left: auto;
+      font-size: 0.7rem;
+      opacity: 0.85;
+      white-space: nowrap;
+    }
+    .weapon-item.active .weapon-req-level { color: white; }
+    
+    /* ==== Режим "Ручной ввод" ==== */
+    .manual-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .manual-grid .input-group { min-width: 0; }
+    @media (max-width: 380px) {
+      .manual-grid { grid-template-columns: 1fr; }
+    }
+    .manual-values-block {
+      background: rgba(237, 242, 247, 0.6);
+      border-radius: 20px;
+      padding: 10px 14px;
+      margin-top: 12px;
+      border-left: 4px solid var(--secondary);
+    }
+    .manual-values-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+    .manual-values-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .manual-value-chip {
+      flex: 1 1 45%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 16px;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      animation: chipSnapIn 0.42s var(--spring-easing) both;
+      animation-delay: calc(var(--chip-idx, 0) * 40ms);
+    }
+    .manual-value-chip .mv-label { opacity: 0.75; font-weight: 500; }
+    .manual-value-chip .mv-value { font-weight: 700; color: var(--primary); }
+    
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .calculator-card, .history-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 28px;
+      padding: 20px 16px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .calculator-card.card-MorphIn {
+      animation: sectionMorphIn 0.45s var(--spring-easing) both;
+    }
+    
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--primary);
+      border-bottom: 2px solid var(--secondary);
+      padding-bottom: 10px;
+      margin-bottom: 18px;
+    }
+    
+    .share-btn {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-size: 0.95rem;
+      cursor: pointer;
+      padding: 4px 12px;
+      border-radius: 20px;
+      transition: background 0.2s, transform 0.2s var(--spring-easing);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .share-btn:hover { background: rgba(75, 83, 32, 0.1); }
+    .share-btn:active { transform: scale(0.92); }
+    
+    .form-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+    
+    .input-group { width: 100%; }
+    
+    .input-group label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 4px;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+      transition: transform 0.2s ease, color 0.2s ease;
+    }
+    
+    .input-group input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid rgba(206, 212, 218, 0.7);
+      border-radius: 30px;
+      font-size: 1rem;
+      background: rgba(248, 249, 250, 0.8);
+      transition: transform 0.25s var(--spring-easing), border-color 0.2s ease, box-shadow 0.25s ease, background 0.2s ease;
+    }
+    
+    .input-group input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: rgba(255, 255, 255, 0.95);
+      transform: translateY(-2px) scale(1.012);
+      box-shadow: 0 6px 16px rgba(30, 43, 58, 0.14);
+    }
+    
+    .input-group input.error {
+      border-color: var(--danger);
+      background: rgba(255, 242, 240, 0.9);
+      animation: inputShake 0.42s ease;
+    }
+    
+    .error-message {
+      font-size: 0.75rem;
+      color: var(--danger);
+      margin-left: 12px;
+      margin-top: 4px;
+      display: none;
+    }
+    .error-message.show {
+      display: block;
+      animation: fadeSlideDown 0.25s var(--spring-easing) both;
+    }
+    
+    .range-indicator {
+      font-size: 0.75rem;
+      color: #3d5a73;
+      margin-left: 12px;
+      margin-top: 4px;
+    }
+    
+    .toggle-container {
+      background: rgba(237, 242, 247, 0.7);
+      border-radius: 40px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    
+    .toggle-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .toggle-group span {
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+      font-weight: 500;
+    }
+    
+    .toggle-switch {
+      width: 52px;
+      height: 28px;
+      position: relative;
+      display: inline-block;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: rgba(176, 196, 222, 0.7);
+      border-radius: 28px;
+      transition: background-color 0.3s ease;
+    }
+    
+    .slider:before {
+      content: "";
+      position: absolute;
+      height: 22px;
+      width: 22px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      border-radius: 50%;
+      transition: transform 0.38s var(--spring-easing), width 0.18s ease;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.18);
+    }
+
+    .toggle-switch:active .slider:before {
+      width: 26px;
+    }
+    
+    input:checked + .slider { background-color: #00BFFF; }
+    input:checked + .slider:before { transform: translateX(24px); }
+    
+    .charge-ranges {
+      background: rgba(237, 242, 247, 0.6);
+      border-radius: 30px;
+      padding: 16px;
+      margin-bottom: 18px;
+      border-left: 4px solid var(--secondary);
+    }
+    
+    .charge-ranges h4 {
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+    }
+    
+    .ranges-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    
+    .range-item {
+      background: rgba(255, 255, 255, 0.7);
+      padding: 8px 12px;
+      border-radius: 40px;
+      font-size: 0.8rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      flex: 1 0 auto;
+      min-width: 120px;
+      transition: transform 0.2s var(--spring-easing), box-shadow 0.2s ease;
+      animation: chipSnapIn 0.42s var(--spring-easing) both;
+      animation-delay: calc(var(--chip-idx, 0) * 35ms);
+    }
+
+    .range-item:active {
+      transform: scale(0.95);
+    }
+    
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+    
+    .btn {
+      flex: 1 1 130px;
+      padding: 14px 12px;
+      border: none;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.22s var(--spring-easing), box-shadow 0.22s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .btn:active {
+      transform: scale(0.94);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    }
+    .btn-calculate { background: var(--primary); color: white; }
+    .btn-redpoly { background: var(--red-poly); color: white; }
+    .btn-reset { background: var(--danger); color: white; }
+    
+    .results {
+      background: rgba(237, 242, 247, 0.6);
+      border-radius: 30px;
+      padding: 18px 12px;
+      margin-top: 20px;
+      border-left: 5px solid var(--secondary);
+      display: none;
+      transform-origin: top center;
+    }
+    
+    .results.active {
+      display: block;
+      animation: resultBoxUnfold 0.48s var(--spring-easing) both;
+    }
+
+    .results.closing {
+      display: block;
+      animation: resultBoxFold 0.26s ease-in forwards;
+    }
+    
+    .results h3 {
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+    }
+    
+    .result-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    
+    .result-item {
+      flex: 1 1 100px;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 20px;
+      padding: 14px 6px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      transition: transform 0.22s var(--spring-easing);
+    }
+
+    .results.active .result-item {
+      animation: resultCardPop 0.45s var(--spring-easing) both;
+    }
+    .results.active .result-item:nth-child(1) { animation-delay: 0.04s; }
+    .results.active .result-item:nth-child(2) { animation-delay: 0.09s; }
+    .results.active .result-item:nth-child(3) { animation-delay: 0.14s; }
+    .results.active .result-item:nth-child(4) { animation-delay: 0.19s; }
+
+    .result-item:active {
+      transform: scale(0.95);
+    }
+    
+    .result-label {
+      font-size: 0.75rem;
+      color: var(--primary);
+      opacity: 0.7;
+      font-weight: 500;
+    }
+    
+    .result-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 1.8rem;
+    }
+
+    /* ==== БАРАБАН ЦИФР (ОДОМЕТР / СТАРЫЕ ЧАСЫ) ==== */
+    .odometer-wrap {
+      display: inline-flex;
+      align-items: baseline;
+      justify-content: center;
+      line-height: 1.2;
+      font-variant-numeric: tabular-nums;
+    }
+    .odo-digit-window {
+      display: inline-block;
+      height: 1.2em;
+      overflow: hidden;
+      vertical-align: bottom;
+      position: relative;
+      mask-image: linear-gradient(to bottom, transparent 0%, #000 15%, #000 85%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 15%, #000 85%, transparent 100%);
+    }
+    .odo-ribbon {
+      display: flex;
+      flex-direction: column;
+      will-change: transform;
+      transition: transform 0.72s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .odo-cell {
+      height: 1.2em;
+      line-height: 1.2em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 0.5px;
+    }
+    .odo-static {
+      display: inline-block;
+      line-height: 1.2em;
+      white-space: pre;
+      animation: fadeSlideUp 0.35s var(--spring-easing) both;
+    }
+    
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 20px;
+      overflow: hidden;
+      display: table;
+    }
+    
+    .history-table th, .history-table td {
+      padding: 12px 6px;
+      text-align: left;
+      border-bottom: 1px solid rgba(222, 226, 230, 0.5);
+      white-space: nowrap;
+    }
+    
+    .history-table th {
+      background: var(--primary);
+      color: white;
+      font-weight: 500;
+    }
+
+    .history-table tbody tr {
+      transition: background-color 0.2s ease, transform 0.18s ease;
+    }
+    .history-table tbody tr:active {
+      background-color: rgba(30, 43, 58, 0.14);
+      transform: scale(0.985);
+    }
+    .history-row-enter {
+      animation: historyRowSlideIn 0.45s var(--spring-easing) both;
+      animation-delay: calc(var(--row-idx, 0) * 35ms);
+    }
+    .history-row-fresh {
+      animation: historyRowSlideIn 0.5s var(--spring-easing) both, rowHighlightPulse 1.1s ease-out;
+    }
+    
+    .history-content {
+      overflow-x: auto;
+      border-radius: 16px;
+    }
+    
+    .no-history {
+      text-align: center;
+      padding: 32px 12px;
+      background: rgba(241, 243, 245, 0.6);
+      border-radius: 40px;
+      color: #6c757d;
+      animation: fadeSlideUp 0.35s ease both;
+    }
+    
+    .restart-section {
+      margin-top: 24px;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 40px;
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .restart-section h3 { 
+      color: var(--primary); 
+      margin-bottom: 10px; 
+      font-size: 1.2rem;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+    }
+    .restart-section .btn { background: var(--danger); color: white; }
+    
+    footer {
+      text-align: center;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.75rem;
+      margin-top: 16px;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    }
+    
+    .badge {
+      background: var(--secondary);
+      color: white;
+      border-radius: 40px;
+      padding: 2px 12px;
+      font-size: 0.8rem;
+      margin-left: 8px;
+      display: inline-block;
+      transition: transform 0.3s var(--spring-easing);
+    }
+    .badge.bump {
+      animation: badgeBump 0.4s var(--spring-easing);
+    }
+    
+    .compact-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.75rem;
+      margin-top: 12px;
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    
+    .compact-table th { background: var(--primary); color: white; padding: 6px; }
+    .compact-table td { padding: 8px; border-bottom: 1px solid rgba(221, 221, 221, 0.5); }
+    
+    /* ==== АНИМАЦИЯ МОДАЛЬНЫХ ОКОН ==== */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: var(--app-height, 100%);
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.modal-open {
+      display: flex;
+      animation: modalBackdropIn 0.28s ease forwards;
+    }
+
+    .modal.modal-closing {
+      display: flex;
+      pointer-events: none;
+      animation: modalBackdropOut 0.24s ease forwards;
+    }
+    
+    .modal-content {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      max-width: 90%;
+      width: 400px;
+      border-radius: 28px;
+      padding: 24px;
+      position: relative;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.3);
+      transform-origin: center center;
+    }
+
+    .modal.modal-open .modal-content {
+      animation: modalCardSpringIn 0.44s var(--spring-easing) both;
+    }
+
+    .modal.modal-closing .modal-content {
+      animation: modalCardSpringOut 0.22s ease-in forwards;
+    }
+    
+    .modal-content h3 {
+      margin-bottom: 16px;
+      color: var(--primary);
+    }
+    
+    .modal-detail p {
+      margin: 8px 0;
+      font-size: 0.95rem;
+      border-bottom: 1px solid rgba(238, 238, 238, 0.5);
+      padding: 6px 0;
+      animation: detailRowCascade 0.38s var(--spring-easing) both;
+      animation-delay: calc(var(--detail-idx, 0) * 32ms);
+    }
+    
+    .modal-detail .history-entry {
+      background: rgba(248, 249, 250, 0.7);
+      border-radius: 12px;
+      padding: 12px;
+      margin: 10px 0;
+      border-left: 4px solid var(--secondary);
+    }
+    
+    .modal-detail .history-entry p {
+      border-bottom: none;
+      padding: 3px 0;
+      margin: 3px 0;
+    }
+    
+    .close-modal {
+      margin-top: 16px;
+      background: var(--secondary);
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 40px;
+      width: 100%;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s var(--spring-easing);
+    }
+
+    .close-modal:active {
+      transform: scale(0.95);
+    }
+    
+    #qr-code-container {
+      display: flex;
+      justify-content: center;
+      margin: 16px 0;
+      animation: cardPopIn 0.45s var(--spring-easing) 0.08s both;
+    }
+    
+    #qr-link-display {
+      font-size: 0.7rem;
+      word-break: break-all;
+      color: #555;
+      background: rgba(241, 243, 245, 0.7);
+      padding: 8px;
+      border-radius: 8px;
+      margin-top: 8px;
+    }
+    
+    .history-detail-item {
+      background: rgba(248, 249, 250, 0.7);
+      border-radius: 12px;
+      padding: 12px;
+      margin: 10px 0;
+      border-left: 4px solid var(--secondary);
+      animation: detailRowCascade 0.42s var(--spring-easing) both;
+      animation-delay: calc(var(--detail-idx, 0) * 55ms);
+    }
+    
+    .history-detail-item p {
+      border-bottom: none !important;
+      padding: 3px 0 !important;
+      margin: 3px 0 !important;
+    }
+    
+    .history-detail-item strong {
+      color: var(--primary);
+    }
+    
+    .history-detail-divider {
+      border-top: 2px dashed rgba(222, 226, 230, 0.5);
+      margin: 16px 0;
+    }
+    
+    .version-info {
+      text-align: center;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.7rem;
+      padding: 8px 0 4px 0;
+      letter-spacing: 0.5px;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    }
+    
+    /* --- Собственное окно уведомлений (вместо системного alert) --- */
+    .alert-body {
+      margin: 4px 0 18px;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: #333;
+      text-align: left;
+      word-break: break-word;
+    }
+    .alert-body ul {
+      margin: 0;
+      padding-left: 20px;
+      list-style: disc;
+    }
+    .alert-body li {
+      margin-bottom: 6px;
+    }
+    .alert-body p { margin: 0 0 6px; }
+    #alert-modal .modal-content {
+      text-align: center;
+    }
+    #alert-ok-btn {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 40px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s var(--spring-easing);
+      position: relative;
+      overflow: hidden;
+    }
+    #alert-ok-btn:active { transform: scale(0.95); }
+    .alert-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .alert-buttons .close-modal {
+      flex: 1;
+      margin: 0;
+    }
+    #alert-confirm-btn {
+      background: var(--danger);
+      color: #fff;
+    }
+    #alert-cancel-btn {
+      background: var(--secondary);
+      color: #fff;
+      border: none;
+      border-radius: 40px;
+      padding: 14px 16px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* ==== RIPPLE-ВОЛНА ПРИ НАЖАТИИ ==== */
+    .ripple-wave {
+      position: absolute;
+      border-radius: 50%;
+      transform: scale(0);
+      pointer-events: none;
+      background: radial-gradient(circle, rgba(255,255,255,0.48) 0%, rgba(255,255,255,0.12) 70%, transparent 100%);
+      animation: rippleExpand 0.55s ease-out forwards;
+      z-index: 2;
+    }
+
+    .redpoly-tumbler {
+      animation: chipSnapIn 0.45s var(--spring-easing) both;
+      animation-delay: calc(var(--tumbler-idx, 0) * 55ms);
+    }
+    .redpoly-tumbler.active {
+      animation: chipSnapIn 0.5s var(--spring-easing) both, activeTumblerPulse 2s ease-in-out infinite;
+      animation-delay: calc(var(--tumbler-idx, 0) * 55ms);
+    }
+    /* ==== ПОВОРОТНЫЕ ДИСКИ ТУМБЛЕРОВ (КРАСНОПОЛЬ) ==== */
+    .redpoly-dials-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .redpoly-dial-card {
+      background: rgba(255, 255, 255, 0.78);
+      border-radius: 22px;
+      padding: 10px 6px 12px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+      animation: resultCardPop 0.48s var(--spring-easing) 0.16s both;
+    }
+
+    .redpoly-dial-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--primary);
+      opacity: 0.75;
+      margin-bottom: 6px;
+    }
+
+    .dial-viewport {
+      position: relative;
+      width: 100%;
+      height: 76px;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      mask-image: linear-gradient(to right, transparent 0%, #000 18%, #000 82%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 18%, #000 82%, transparent 100%);
+    }
+
+    /* Треугольная риска-указатель сверху по центру */
+    .dial-pointer {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 8px solid var(--red-poly);
+      z-index: 5;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+    }
+
+    /* Подсветка активного сектора под риской */
+    .dial-center-glow {
+      position: absolute;
+      top: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 34px;
+      height: 36px;
+      border-radius: 10px;
+      background: radial-gradient(circle, rgba(178, 59, 44, 0.22) 0%, transparent 75%);
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    /* Сам круглый диск (видна его верхняя дуга) */
+    .dial-wheel {
+      position: absolute;
+      top: 9px;
+      left: 50%;
+      width: 172px;
+      height: 172px;
+      margin-left: -86px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 35%, #ffffff 0%, #e4e9ef 68%, #cfd6df 100%);
+      border: 2px solid rgba(30, 43, 58, 0.22);
+      box-shadow:
+        inset 0 2px 6px rgba(255, 255, 255, 0.9),
+        inset 0 -8px 16px rgba(0, 0, 0, 0.14),
+        0 3px 10px rgba(0, 0, 0, 0.18);
+      will-change: transform;
+      transition: transform 1.15s cubic-bezier(0.2, 1.14, 0.32, 1);
+    }
+
+    /* Внутреннее декоративное кольцо лимба */
+    .dial-wheel::before {
+      content: '';
+      position: absolute;
+      inset: 28px;
+      border-radius: 50%;
+      border: 1px dashed rgba(30, 43, 58, 0.22);
+      pointer-events: none;
+    }
+
+    .dial-slot {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: 32px;
+      height: 86px;
+      margin-left: -16px;
+      transform-origin: 50% 86px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 4px;
+      user-select: none;
+    }
+
+    /* Риска деления на краю диска */
+    .dial-slot::before {
+      content: '';
+      width: 2px;
+      height: 5px;
+      background: rgba(30, 43, 58, 0.35);
+      border-radius: 1px;
+      margin-bottom: 2px;
+    }
+
+    .dial-slot span {
+      font-size: 1.05rem;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--primary);
+      opacity: 0.42;
+      transition: color 0.35s ease, opacity 0.35s ease, transform 0.35s var(--spring-easing);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .dial-slot.active::before {
+      background: var(--red-poly);
+      height: 6px;
+    }
+
+    .dial-slot.active span {
+      color: var(--red-poly);
+      opacity: 1;
+      transform: scale(1.22);
+    }
+
+    .dial-subvalue {
+      margin-top: 6px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      background: rgba(178, 59, 44, 0.12);
+      color: var(--red-poly);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    /* Ночная тема для дисковых тумблеров */
+    body.night-theme .redpoly-dial-card {
+      background: rgba(48, 48, 53, 0.72) !important;
+      border-color: rgba(255, 255, 255, 0.12) !important;
+    }
+    body.night-theme .redpoly-dial-title {
+      color: #e8e8ea !important;
+    }
+    body.night-theme .dial-wheel {
+      background: radial-gradient(circle at 50% 35%, #3a3a40 0%, #26262b 70%, #1b1b1f 100%) !important;
+      border-color: rgba(255, 255, 255, 0.2) !important;
+      box-shadow:
+        inset 0 1px 4px rgba(255, 255, 255, 0.15),
+        inset 0 -8px 16px rgba(0, 0, 0, 0.55),
+        0 4px 12px rgba(0, 0, 0, 0.5) !important;
+    }
+    body.night-theme .dial-wheel::before {
+      border-color: rgba(255, 255, 255, 0.16) !important;
+    }
+    body.night-theme .dial-slot::before {
+      background: rgba(255, 255, 255, 0.35) !important;
+    }
+    body.night-theme .dial-slot span {
+      color: #dcdce0 !important;
+    }
+    body.night-theme .dial-slot.active::before {
+      background: #40c057 !important;
+    }
+    body.night-theme .dial-slot.active span {
+      color: #51cf66 !important;
+    }
+    body.night-theme .dial-pointer {
+      border-top-color: #51cf66 !important;
+    }
+    body.night-theme .dial-center-glow {
+      background: radial-gradient(circle, rgba(64, 192, 87, 0.24) 0%, transparent 75%) !important;
+    }
+    body.night-theme .dial-subvalue {
+      background: rgba(47, 158, 68, 0.22) !important;
+      color: #69db7c !important;
+    }
+    /* ==== КНОПКИ БЫСТРОЙ ПРАВКИ ДАЛЬНОСТИ ==== */
+    .quick-dist-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .quick-dist-btn {
+      flex: 1;
+      padding: 8px 4px;
+      border: 1px solid rgba(30, 43, 58, 0.2);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.78);
+      color: var(--primary);
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.16s var(--spring-easing), background 0.16s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .quick-dist-btn:active {
+      transform: scale(0.92);
+      background: var(--primary);
+      color: #fff;
+    }
+
+    /* ==== БЛОК РАЗЛЁТА / РАДИУСА ПОРАЖЕНИЯ ==== */
+    .spread-result-box {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px dashed rgba(30, 43, 58, 0.28);
+      display: none;
+    }
+    .spread-result-box.active {
+      display: block;
+      animation: fadeSlideDown 0.3s var(--spring-easing) both;
+    }
+    .spread-result-title {
+      font-size: 0.74rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--primary);
+      opacity: 0.75;
+      margin-bottom: 6px;
+      text-align: center;
+    }
+    .spread-result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .spread-cell {
+      background: rgba(237, 242, 247, 0.75);
+      border-radius: 14px;
+      padding: 8px 6px;
+      text-align: center;
+    }
+    .spread-cell-label {
+      font-size: 0.7rem;
+      color: var(--primary);
+      opacity: 0.72;
+    }
+    .spread-cell-val {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-top: 2px;
+    }
+
+    /* ==== КАРТОЧКА ПОЛЁТА, ТРАЕКТОРИИ И ПЕРЕКИДНЫХ ЧАСОВ ==== */
+    .flight-tracker-card {
+      background: rgba(237, 242, 247, 0.65);
+      border-radius: 28px;
+      padding: 16px 12px;
+      margin-top: 14px;
+      border-left: 5px solid var(--primary);
+      display: none;
+    }
+    .flight-tracker-card.active {
+      display: block;
+      animation: resultBoxUnfold 0.45s var(--spring-easing) both;
+    }
+    .flight-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 0 4px;
+    }
+    .flight-header-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .flight-status-pill {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: rgba(30, 43, 58, 0.12);
+      color: var(--primary);
+    }
+    .flight-status-pill.flying {
+      background: rgba(244, 162, 97, 0.25);
+      color: #b55d14;
+    }
+    .flight-status-pill.laser {
+      background: rgba(178, 59, 44, 0.2);
+      color: var(--red-poly);
+    }
+    .flight-status-pill.impact {
+      background: rgba(42, 157, 143, 0.22);
+      color: var(--success);
+    }
+
+    /* Перекидные часы (Split-Flap) */
+    .flip-clock-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      margin: 6px 0 12px;
+    }
+    .flip-group {
+      display: flex;
+      gap: 4px;
+    }
+    .flip-sep {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--primary);
+      line-height: 1;
+      padding: 0 2px;
+      opacity: 0.75;
+    }
+    .flip-unit {
+      position: relative;
+      width: 38px;
+      height: 52px;
+      perspective: 400px;
+      border-radius: 10px;
+      background: #1b2430;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.28);
+      font-family: 'Segoe UI', Roboto, monospace;
+      font-weight: 800;
+      font-size: 1.75rem;
+      color: #f8fafc;
+      user-select: none;
+    }
+    /* Линия разреза карточки пополам */
+    .flip-unit::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 1.5px;
+      background: rgba(0, 0, 0, 0.65);
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12);
+      z-index: 6;
+      pointer-events: none;
+    }
+    .flip-half {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 26px;
+      overflow: hidden;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .flip-half span {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 52px;
+      line-height: 52px;
+      text-align: center;
+    }
+    .flip-top,
+    .flip-leaf-top {
+      top: 0;
+      background: linear-gradient(180deg, #2b3848 0%, #1f2936 100%);
+      border-radius: 10px 10px 0 0;
+    }
+    .flip-top span,
+    .flip-leaf-top span {
+      top: 0;
+    }
+    .flip-bottom,
+    .flip-leaf-bottom {
+      bottom: 0;
+      background: linear-gradient(180deg, #18202b 0%, #232e3d 100%);
+      border-radius: 0 0 10px 10px;
+    }
+    .flip-bottom span,
+    .flip-leaf-bottom span {
+      bottom: 0;
+    }
+    .flip-leaf-top {
+      z-index: 4;
+      transform-origin: 50% 100%;
+      animation: flipTopDown 0.2s ease-in forwards;
+    }
+    .flip-leaf-bottom {
+      z-index: 5;
+      transform-origin: 50% 0%;
+      transform: rotateX(90deg);
+      animation: flipBottomDown 0.2s 0.2s ease-out forwards;
+    }
+    @keyframes flipTopDown {
+      0% { transform: rotateX(0deg); }
+      100% { transform: rotateX(-90deg); }
+    }
+    @keyframes flipBottomDown {
+      0% { transform: rotateX(90deg); }
+      100% { transform: rotateX(0deg); }
+    }
+
+    /* График траектории */
+    .trajectory-box {
+      position: relative;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.94);
+      border-radius: 20px;
+      padding: 8px 8px 4px;
+      border: 1.5px solid rgba(30, 43, 58, 0.22);
+      box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+    }
+    .trajectory-svg {
+      width: 100%;
+      height: 138px;
+      display: block;
+    }
+    .traj-axis {
+      stroke: rgba(30, 43, 58, 0.35);
+      stroke-width: 1.2;
+    }
+    .traj-terrain {
+      fill: rgba(30, 43, 58, 0.1);
+    }
+    .traj-arc-base {
+      fill: none;
+      stroke: rgba(30, 43, 58, 0.55);
+      stroke-width: 2.5;
+      stroke-dasharray: 6, 4;
+    }
+    .traj-arc-active {
+      fill: none;
+      stroke: #1d4ed8;
+      stroke-width: 3.4;
+      stroke-linecap: round;
+    }
+    .trajectory-box.krasnopol-mode .traj-arc-active {
+      stroke: #b23b2c;
+    }
+    .traj-label-own {
+      fill: #0f172a;
+      font-size: 9.5px;
+      font-weight: 700;
+    }
+    .traj-label-target {
+      fill: #b23b2c;
+      font-size: 9.5px;
+      font-weight: 700;
+    }
+    .traj-laser-line {
+      stroke: #d9480f;
+      stroke-width: 1.6;
+      stroke-dasharray: 3, 3;
+    }
+    .traj-laser-dot,
+    .traj-laser-text {
+      fill: #d9480f;
+      font-size: 9px;
+      font-weight: 800;
+    }
+    .traj-shell-core {
+      fill: #1d4ed8;
+    }
+    .traj-shell-halo {
+      fill: #1d4ed8;
+      opacity: 0.26;
+    }
+    .trajectory-box.krasnopol-mode .traj-shell-core,
+    .trajectory-box.krasnopol-mode .traj-shell-halo {
+      fill: #b23b2c;
+    }
+
+    /* Ночная тема для графика */
+    body.night-theme .trajectory-box {
+      background: rgba(26, 26, 30, 0.92) !important;
+      border-color: rgba(255, 255, 255, 0.16) !important;
+    }
+    body.night-theme .traj-axis {
+      stroke: rgba(255, 255, 255, 0.28);
+    }
+    body.night-theme .traj-terrain {
+      fill: rgba(255, 255, 255, 0.06);
+    }
+    body.night-theme .traj-arc-base {
+      stroke: rgba(255, 255, 255, 0.35);
+    }
+    body.night-theme .traj-arc-active {
+      stroke: #00BFFF;
+    }
+    body.night-theme .trajectory-box.krasnopol-mode .traj-arc-active {
+      stroke: #51cf66;
+    }
+    body.night-theme .traj-label-own {
+      fill: #e4e4e8;
+    }
+    body.night-theme .traj-label-target {
+      fill: #ff6b6b;
+    }
+    body.night-theme .traj-laser-line {
+      stroke: #ffd43b;
+    }
+    body.night-theme .traj-laser-dot,
+    body.night-theme .traj-laser-text {
+      fill: #ffd43b;
+    }
+    body.night-theme .traj-shell-core,
+    body.night-theme .traj-shell-halo {
+      fill: #00BFFF;
+    }
+    body.night-theme .trajectory-box.krasnopol-mode .traj-shell-core,
+    body.night-theme .trajectory-box.krasnopol-mode .traj-shell-halo {
+      fill: #51cf66;
+    }
+
+    /* Ночная тема для новых элементов */
+    body.night-theme .quick-dist-btn {
+      background: rgba(52, 52, 58, 0.85) !important;
+      color: #e8e8ea !important;
+      border-color: rgba(255, 255, 255, 0.14) !important;
+    }
+    body.night-theme .quick-dist-btn:active {
+      background: #00BFFF !important;
+      color: #111 !important;
+    }
+    body.night-theme .spread-result-box,
+    body.night-theme .trajectory-box {
+      background: rgba(48, 48, 53, 0.72) !important;
+      border-color: rgba(255, 255, 255, 0.14) !important;
+    }
+    body.night-theme .spread-cell {
+      background: rgba(28, 28, 32, 0.82) !important;
+    }
+    body.night-theme .spread-result-title,
+    body.night-theme .spread-cell-label,
+    body.night-theme .spread-cell-val,
+    body.night-theme .flight-header-title,
+    body.night-theme .flip-sep {
+      color: #e8e8ea !important;
+    }
+    body.night-theme .flight-tracker-card {
+      background: rgba(24, 24, 27, 0.82) !important;
+      border-left-color: #66666c !important;
+    }
+    body.night-theme .flip-unit {
+      background: #101013 !important;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    body.night-theme .flip-top,
+    body.night-theme .flip-leaf-top {
+      background: linear-gradient(180deg, #27272c 0%, #19191d 100%) !important;
+    }
+    body.night-theme .flip-bottom,
+    body.night-theme .flip-leaf-bottom {
+      background: linear-gradient(180deg, #121215 0%, #1d1d22 100%) !important;
+    }
+    .krasnopol-flight-bar {
+      display: none;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      padding: 2px 6px;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      color: #2b8a3e;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    body.night-theme .krasnopol-flight-bar {
+      background: transparent !important;
+      color: #51cf66 !important;
+    }
+    /* ==== СКЛАДНАЯ ПАНЕЛЬ КОРРЕКТИРОВКИ ОГНЯ (С/Ю/З/В) ==== */
+    .corr-accordion {
+      margin-bottom: 14px;
+      border-radius: 22px;
+      background: rgba(237, 242, 247, 0.65);
+      border: 1px solid rgba(30, 43, 58, 0.16);
+      overflow: hidden;
+      transition: background 0.25s ease, border-color 0.25s ease;
+    }
+    .corr-header-btn {
+      width: 100%;
+      padding: 11px 16px;
+      background: transparent;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--primary);
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .corr-header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .corr-header-btn i.fa-chevron-down {
+      transition: transform 0.35s var(--spring-easing);
+      opacity: 0.75;
+    }
+    .corr-accordion.open .corr-header-btn i.fa-chevron-down {
+      transform: rotate(180deg);
+    }
+    .corr-body {
+      display: none;
+      padding: 4px 14px 14px;
+      border-top: 1px dashed rgba(30, 43, 58, 0.15);
+    }
+    .corr-accordion.open .corr-body {
+      display: block;
+      animation: fadeSlideDown 0.28s var(--spring-easing) both;
+    }
+    .corr-row {
+      margin-top: 10px;
+    }
+    .corr-row label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--primary);
+      opacity: 0.85;
+      margin-bottom: 5px;
+    }
+    .corr-input-flex {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .corr-seg {
+      display: flex;
+      background: rgba(30, 43, 58, 0.1);
+      border-radius: 20px;
+      padding: 3px;
+      flex-shrink: 0;
+    }
+    .corr-seg-btn {
+      border: none;
+      background: transparent;
+      color: var(--primary);
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 8px 12px;
+      border-radius: 17px;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .corr-seg-btn.active {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+    .corr-seg-btn:active {
+      transform: scale(0.94);
+    }
+    .corr-num-input {
+      width: 100%;
+      min-width: 0;
+      padding: 10px 14px !important;
+      border: 2px solid rgba(206, 212, 218, 0.75) !important;
+      border-radius: 22px !important;
+      font-size: 0.95rem !important;
+      background: rgba(255, 255, 255, 0.88) !important;
+    }
+    .corr-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .corr-apply-btn {
+      flex: 1;
+      padding: 11px 12px;
+      border: none;
+      border-radius: 24px;
+      background: var(--success);
+      color: #fff;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 3px 10px rgba(42, 157, 143, 0.3);
+      transition: transform 0.18s var(--spring-easing);
+    }
+    .corr-apply-btn:active {
+      transform: scale(0.95);
+    }
+    .corr-clear-btn {
+      padding: 11px 14px;
+      border: 1px solid rgba(30, 43, 58, 0.2);
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.75);
+      color: var(--primary);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .corr-output {
+      margin-top: 10px;
+      padding: 9px 12px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.82);
+      border-left: 4px solid var(--success);
+      font-size: 0.82rem;
+      color: var(--primary);
+      display: none;
+      line-height: 1.45;
+    }
+    .corr-output.active {
+      display: block;
+      animation: fadeSlideDown 0.25s var(--spring-easing) both;
+    }
+
+    /* Ночная тема для корректировки */
+    body.night-theme .corr-accordion {
+      background: rgba(38, 38, 42, 0.78) !important;
+      border-color: rgba(255, 255, 255, 0.14) !important;
+    }
+    body.night-theme .corr-header-btn,
+    body.night-theme .corr-row label,
+    body.night-theme .corr-seg-btn {
+      color: #e8e8ea !important;
+    }
+    body.night-theme .corr-body {
+      border-top-color: rgba(255, 255, 255, 0.12) !important;
+    }
+    body.night-theme .corr-seg {
+      background: rgba(255, 255, 255, 0.1) !important;
+    }
+    body.night-theme .corr-seg-btn.active {
+      background: #00BFFF !important;
+      color: #101013 !important;
+    }
+    body.night-theme .corr-clear-btn {
+      background: rgba(52, 52, 58, 0.85) !important;
+      color: #e8e8ea !important;
+      border-color: rgba(255, 255, 255, 0.14) !important;
+    }
+    body.night-theme .corr-output {
+      background: rgba(24, 24, 28, 0.88) !important;
+      color: #e8e8ea !important;
+    }
+    /* ==== КЛЮЧЕВЫЕ КАДРЫ АНИМАЦИЙ (KEYFRAMES) ==== */
+    @keyframes weaponContainerOpen {
+      0% { opacity: 0; transform: translateY(-8px) scale(0.97); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes weaponContainerClose {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-10px) scale(0.95); }
+    }
+    @keyframes legoItemAssemble {
+      0% {
+        opacity: 0;
+        transform: perspective(600px) rotateX(-75deg) translateY(-18px) scale(0.86);
+      }
+      70% {
+        opacity: 1;
+        transform: perspective(600px) rotateX(8deg) translateY(2px) scale(1.02);
+      }
+      100% {
+        opacity: 1;
+        transform: perspective(600px) rotateX(0deg) translateY(0) scale(1);
+      }
+    }
+    @keyframes legoItemDisassemble {
+      0% {
+        opacity: 1;
+        transform: perspective(600px) rotateX(0deg) translateY(0) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: perspective(600px) rotateX(-55deg) translateY(-12px) scale(0.88);
+      }
+    }
+    @keyframes legoBlockDrop {
+      0% {
+        opacity: 0;
+        transform: translateY(28px) scale(0.92);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    @keyframes sectionMorphIn {
+      0% {
+        opacity: 0;
+        transform: translateY(16px) scale(0.96);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    @keyframes chipSnapIn {
+      0% {
+        opacity: 0;
+        transform: translateY(14px) scale(0.78);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    @keyframes resultBoxUnfold {
+      0% {
+        opacity: 0;
+        transform: translateY(-12px) scaleY(0.82) scaleX(0.95);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scaleY(1) scaleX(1);
+      }
+    }
+    @keyframes resultBoxFold {
+      0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.92);
+      }
+    }
+    @keyframes resultCardPop {
+      0% {
+        opacity: 0;
+        transform: translateY(16px) scale(0.82);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    @keyframes modalBackdropIn {
+      0% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+    @keyframes modalBackdropOut {
+      0% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    @keyframes modalCardSpringIn {
+      0% {
+        opacity: 0;
+        transform: translateY(34px) scale(0.76) rotateX(-12deg);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1) rotateX(0deg);
+      }
+    }
+    @keyframes modalCardSpringOut {
+      0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(24px) scale(0.82);
+      }
+    }
+    @keyframes detailRowCascade {
+      0% {
+        opacity: 0;
+        transform: translateX(-14px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    @keyframes historyRowSlideIn {
+      0% {
+        opacity: 0;
+        transform: translateX(-18px) scale(0.96);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+      }
+    }
+    @keyframes rowHighlightPulse {
+      0% { background-color: rgba(42, 157, 143, 0.35); }
+      100% { background-color: transparent; }
+    }
+    @keyframes rippleExpand {
+      0% { transform: scale(0); opacity: 0.85; }
+      100% { transform: scale(2.8); opacity: 0; }
+    }
+    @keyframes cardPopIn {
+      0% { opacity: 0; transform: scale(0.84) translateY(18px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes cardPopOut {
+      0% { opacity: 1; transform: scale(1) translateY(0); }
+      100% { opacity: 0; transform: scale(0.86) translateY(-16px); }
+    }
+    @keyframes floatIcon {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+    @keyframes inputShake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-7px); }
+      40% { transform: translateX(7px); }
+      60% { transform: translateX(-5px); }
+      80% { transform: translateX(5px); }
+    }
+    @keyframes lockWiggle {
+      0%, 100% { transform: rotate(0deg) scale(1); }
+      25% { transform: rotate(-18deg) scale(1.2); }
+      75% { transform: rotate(18deg) scale(1.2); }
+    }
+    @keyframes badgeBump {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.35); }
+      100% { transform: scale(1); }
+    }
+    @keyframes activeTumblerPulse {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-2px) scale(1.03); }
+    }
+    @keyframes fadeSlideDown {
+      0% { opacity: 0; transform: translateY(-6px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeSlideUp {
+      0% { opacity: 0; transform: translateY(8px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ==== ОПТИМИЗАЦИЯ РЕНДЕРА ПРИ ОТКРЫТОЙ КЛАВИАТУРЕ В APK ==== */
+    body.keyboard-open header,
+    body.keyboard-open .calculator-card,
+    body.keyboard-open .history-card,
+    body.keyboard-open .login-card {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      background: rgba(244, 249, 249, 0.95) !important;
+    }
+
+    body.night-theme.keyboard-open header,
+    body.night-theme.keyboard-open .calculator-card,
+    body.night-theme.keyboard-open .history-card,
+    body.night-theme.keyboard-open .login-card {
+      background: rgba(28, 28, 31, 0.95) !important;
+    }
+  </style>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="stylesheet" href="css/night-theme.css">
+</head>
+<body>
+
+<!-- ARTBALL-THEME-PATCH-V1 -->
+<div id="bg-day"></div>
+<div id="bg-night"></div>
+<script>
+  (function () {
+    try {
+      var h = new Date().getHours();
+      var night = (h >= 21 || h < 7);
+      document.body.classList.toggle('night-theme', night);
+      var bgDay = document.getElementById('bg-day');
+      var bgNight = document.getElementById('bg-night');
+      if (bgDay) bgDay.style.opacity = night ? '0' : '1';
+      if (bgNight) bgNight.style.opacity = night ? '1' : '0';
+    } catch (e) {}
+  })();
+</script>
+
+<script>
+  // ==== ЗАМОК ВЫСОТЫ ЭКРАНА И ЗАЩИТА ОТ ГЛЮКОВ КЛАВИАТУРЫ В APK ====
+  (function () {
+    var maxH = window.innerHeight;
+
+    function applyAppHeight(h) {
+      document.documentElement.style.setProperty('--app-height', h + 'px');
+      var bgDay = document.getElementById('bg-day');
+      var bgNight = document.getElementById('bg-night');
+      if (bgDay) bgDay.style.height = h + 'px';
+      if (bgNight) bgNight.style.height = h + 'px';
+    }
+
+    applyAppHeight(maxH);
+
+    window.addEventListener('resize', function () {
+      if (window.innerHeight > maxH) {
+        maxH = window.innerHeight;
+        applyAppHeight(maxH);
+      }
+    });
+
+    window.addEventListener('orientationchange', function () {
+      setTimeout(function () {
+        maxH = window.innerHeight;
+        applyAppHeight(maxH);
+      }, 300);
+    });
+
+    document.addEventListener('focusin', function (e) {
+      if (e.target && e.target.tagName === 'INPUT') {
+        document.body.classList.add('keyboard-open');
+        setTimeout(function () {
+          e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 250);
+      }
+    });
+
+    document.addEventListener('focusout', function (e) {
+      if (e.target && e.target.tagName === 'INPUT') {
+        setTimeout(function () {
+          if (!document.activeElement || document.activeElement.tagName !== 'INPUT') {
+            document.body.classList.remove('keyboard-open');
+          }
+        }, 150);
+      }
+    });
+  })();
+</script>
+
+<!-- ЭКРАН ЗАГРУЗКИ -->
+<div id="loading-screen">
+  <div class="loading-card">
+    <div class="spinner"></div>
+    <h2>🔄 Загрузка</h2>
+    <p class="subtitle" id="loading-subtitle">Проверка обновлений...</p>
+    <div class="progress-text" id="loading-status">Подготовка...</div>
+    <div class="progress-bar">
+      <div class="fill" id="progress-fill"></div>
+    </div>
+    <div class="version" id="loading-version"></div>
+  </div>
+</div>
+
+<!-- ЭКРАН ОБНОВЛЕНИЯ -->
+<div id="update-screen">
+  <div class="update-card">
+    <div class="icon">🔄</div>
+    <h2>⚠️ Доступно обновление!</h2>
+    <p>Обновите приложение</p>
+    
+    <div class="version-info">
+      <span>Текущая версия: <span id="update-current-version"></span></span>
+      <span class="new">Новая версия: <span id="update-new-version"></span></span>
+    </div>
+    
+    <p style="font-size:13px; color:#999; margin-top:12px;">
+      Для обновления почистите кэш<br>
+      и перезапустите приложение
+    </p>
+    
+    <span class="lock-icon">🔒 Обновление обязательно для продолжения работы</span>
+  </div>
+</div>
+
+<!-- ЭКРАН ВХОДА -->
+<div id="login-screen">
+  <div class="login-card" id="login-card-box">
+    <div class="icon">🔐</div>
+    <h2>Артиллерийский калькулятор</h2>
+    <p class="subtitle">Введите код доступа</p>
+    
+    <div class="input-group">
+      <label>🔑 Код доступа</label>
+      <input 
+        type="password" 
+        id="pin-input" 
+        placeholder="Введите код"
+        maxlength="6"
+        inputmode="numeric"
+        autocomplete="off"
+      >
+    </div>
+    
+    <button class="btn" id="login-btn" onclick="login()">
+      🔓 Войти
+    </button>
+    
+    <div class="status" id="login-status"></div>
+    
+    <div class="hint">💡 Для получения кода обратитесь к администратору</div>
+  </div>
+</div>
+
+<!-- ЭКРАН ПЕРЕХОДА (ПРОМЕЖУТОЧНЫЙ) -->
+<div id="transition-screen">
+  <div class="loading-text">✦ Загрузка... ✦</div>
+</div>
+
+<!-- КАЛЬКУЛЯТОР -->
+<div id="app-container">
+  <div class="container">
+    <header>
+      <h1><i class="fas fa-calculator"></i> Артиллерийский Баллистический калькулятор</h1>
+      <div class="subtitle" id="trajectory-status">⚡ Мортирная стрельба</div>
+
+      <div class="weapon-selector">
+        <div class="weapon-dropdown">
+          <button class="weapon-btn" id="weapon-btn" type="button">
+            <span id="selected-weapon">Выберите орудие</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="weapon-list" id="weapon-list">
+            <!-- Список орудий будет заполнен из данных -->
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="main-content">
+      <div class="calculator-card" id="normal-input-section">
+        <div class="section-title"><i class="fas fa-cogs"></i>Параметры</div>
+
+        <div class="toggle-container">
+          <div class="toggle-group">
+            <span><i class="fas fa-bolt"></i> Автоподбор заряда</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="auto-charge-toggle" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="toggle-group" id="trajectory-toggle-group">
+            <span id="trajectory-label"><i class="fas fa-chart-line"></i> Настильная стрельба</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="trajectory-toggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="toggle-group" id="night-theme-toggle-group">
+            <span><i class="fas fa-moon"></i> Ночная тема</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="night-mode-toggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="charge-ranges" id="charge-ranges-container">
+          <h4 style="font-size:1rem;"><i class="fas fa-table"></i> Диапазоны зарядов:</h4>
+          <div class="ranges-grid" id="ranges-grid"></div>
+        </div>
+
+        <div class="input-group" id="charge-input-group" style="display: none;">
+       <label for="charge">Номер заряда</label>
+       <input type="number" id="charge" min="0" placeholder="0">
+       <div class="error-message" id="charge-error"></div>
+       <div class="range-indicator" id="charge-range"></div>
+     </div>
+
+     <div class="form-grid">
+       <div class="input-group">
+         <label><i class="fas fa-bullseye"></i> Дальность до цели (м)</label>
+         <input type="number" id="distance" placeholder="Введите дальность">
+         <div class="quick-dist-row">
+           <button type="button" class="quick-dist-btn" data-delta="-100">-100</button>
+           <button type="button" class="quick-dist-btn" data-delta="-10">-10</button>
+           <button type="button" class="quick-dist-btn" data-delta="10">+10</button>
+           <button type="button" class="quick-dist-btn" data-delta="100">+100</button>
+         </div>
+         <div class="error-message" id="distance-error"></div>
+         <div class="range-indicator" id="distance-range"></div>
+       </div>
+       <div class="input-group">
+         <label><i class="fas fa-mountain"></i> Своя высота (м)</label>
+         <input type="number" id="own-height" placeholder="0">
+       </div>
+       <div class="input-group">
+         <label><i class="fas fa-bullseye"></i> Высота цели (м)</label>
+         <input type="number" id="target-height" placeholder="0">
+       </div>
+       <div class="input-group">
+         <label><i class="fas fa-expand-arrows-alt"></i> Радиус поражения / разлёта (м)</label>
+         <input type="number" id="spread-radius" min="0" placeholder="0">
+       </div>
+     </div>
+
+        <!-- СКЛАДНАЯ ПАНЕЛЬ КОРРЕКТИРОВКИ ОГНЯ (С / Ю / З / В) -->
+        <div class="corr-accordion" id="corr-accordion">
+          <button type="button" class="corr-header-btn" id="corr-toggle-btn">
+            <span class="corr-header-left">
+              <i class="fas fa-compass"></i> Корректировка огня (С / Ю / З / В)
+            </span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+
+          <div class="corr-body" id="corr-body">
+            <div class="corr-row">
+              <label>Текущий азимут орудия (0–6400 тыс.)</label>
+              <input type="number" class="corr-num-input" id="corr-azimuth" min="0" max="6400" placeholder="Например: 1600">
+            </div>
+
+            <div class="corr-row">
+              <label>Сдвиг Север / Юг (м)</label>
+              <div class="corr-input-flex">
+                <div class="corr-seg" id="corr-ns-seg">
+                  <button type="button" class="corr-seg-btn active" data-dir="N">Север</button>
+                  <button type="button" class="corr-seg-btn" data-dir="S">Юг</button>
+                </div>
+                <input type="number" class="corr-num-input" id="corr-ns-val" min="0" placeholder="0">
+              </div>
+            </div>
+
+            <div class="corr-row">
+              <label>Сдвиг Запад / Восток (м)</label>
+              <div class="corr-input-flex">
+                <div class="corr-seg" id="corr-ew-seg">
+                  <button type="button" class="corr-seg-btn active" data-dir="W">Запад</button>
+                  <button type="button" class="corr-seg-btn" data-dir="E">Восток</button>
+                </div>
+                <input type="number" class="corr-num-input" id="corr-ew-val" min="0" placeholder="0">
+              </div>
+            </div>
+
+            <div class="corr-actions">
+              <button type="button" class="corr-apply-btn" id="corr-apply-btn">
+                <i class="fas fa-check"></i> Применить и пересчитать
+              </button>
+              <button type="button" class="corr-clear-btn" id="corr-clear-btn" title="Обнулить сдвиги">
+                Сброс
+              </button>
+            </div>
+
+            <div class="corr-output" id="corr-output"></div>
+          </div>
+        </div>
+
+        <div class="buttons">
+          <button class="btn btn-calculate" id="calculate-mortar"><i class="fas fa-calculator"></i> Расчитать</button>
+          <button class="btn btn-redpoly" id="calculate-redpoly"><i class="fas fa-crosshairs"></i> Краснополь</button>
+          <button class="btn btn-reset" id="reset-calculator"><i class="fas fa-redo"></i> Сброс</button>
+        </div>
+
+        <div class="results" id="results-mortar">
+          <h3 style="font-size:1.2rem;"><i class="fas fa-chart-line"></i> Расчитать</h3>
+          <div class="result-grid">
+            <div class="result-item"><div class="result-label">Режим</div><div class="result-value" id="mortar-mode">Мортирный</div></div>
+            <div class="result-item"><div class="result-label">Заряд</div><div class="result-value" id="mortar-charge">0</div></div>
+            <div class="result-item"><div class="result-label">Время</div><div class="result-value time" id="mortar-flight-time">0</div></div>
+            <div class="result-item"><div class="result-label">Элеватор</div><div class="result-value angle" id="mortar-elevation">0</div></div>
+          </div>
+          <!-- Введенные вручную значения (показывается только в режиме "Ручной ввод") -->
+          <div id="manual-entered-values" class="manual-values-block" style="display:none;">
+            <div class="manual-values-title"><i class="fas fa-keyboard"></i> Введенные значения:</div>
+            <div class="manual-values-grid" id="manual-entered-grid"></div>
+          </div>
+          <div class="spread-result-box" id="mortar-spread-box">
+            <div class="spread-result-title">Накрытие по радиусу (<span id="mortar-spread-r">0</span> м)</div>
+            <div class="spread-result-grid">
+              <div class="spread-cell">
+                <div class="spread-cell-label">Диапазон элеватора</div>
+                <div class="spread-cell-val" id="mortar-spread-elev">—</div>
+              </div>
+              <div class="spread-cell">
+                <div class="spread-cell-label">Сектор азимута</div>
+                <div class="spread-cell-val" id="mortar-spread-az">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="results redpoly-results" id="results-redpoly">
+          <h3 style="font-size:1.2rem;"><i class="fas fa-crosshairs"></i> Краснополь</h3>
+          <div class="result-grid">
+            <div class="result-item"><div class="result-label">Заряд</div><div class="result-value" id="redpoly-charge">0</div></div>
+            <div class="result-item"><div class="result-label">Время полёта</div><div class="result-value" id="redpoly-flight-time">0</div></div>
+            <div class="result-item"><div class="result-label">Элеватор</div><div class="result-value" id="redpoly-elevator">0</div></div>
+          </div>
+
+          <div class="redpoly-dials-row">
+            <div class="redpoly-dial-card">
+              <div class="redpoly-dial-title">Профиль полёта</div>
+              <div class="dial-viewport">
+                <div class="dial-pointer"></div>
+                <div class="dial-center-glow"></div>
+                <div class="dial-wheel" id="dial-wheel-profile"></div>
+              </div>
+              <div class="dial-subvalue" id="dial-sub-profile">—</div>
+            </div>
+
+            <div class="redpoly-dial-card">
+              <div class="redpoly-dial-title">Задержка корр.</div>
+              <div class="dial-viewport">
+                <div class="dial-pointer"></div>
+                <div class="dial-center-glow"></div>
+                <div class="dial-wheel" id="dial-wheel-delay"></div>
+              </div>
+              <div class="dial-subvalue" id="dial-sub-delay">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="spread-result-box" id="redpoly-spread-box">
+          <div class="spread-result-title">Сектор поиска / накрытия (<span id="redpoly-spread-r">0</span> м)</div>
+          <div class="spread-result-grid">
+            <div class="spread-cell">
+              <div class="spread-cell-label">Диапазон элеватора</div>
+              <div class="spread-cell-val" id="redpoly-spread-elev">—</div>
+            </div>
+            <div class="spread-cell">
+              <div class="spread-cell-label">Сектор азимута</div>
+              <div class="spread-cell-val" id="redpoly-spread-az">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- КАРТОЧКА ПОЛЁТА, ТРАЕКТОРИИ И ПЕРЕКИДНЫХ ЧАСОВ -->
+        <div class="flight-tracker-card" id="flight-tracker-card">
+          <div class="flight-header">
+            <div class="flight-header-title"><i class="fas fa-stopwatch"></i> Полёт снаряда</div>
+            <span class="flight-status-pill" id="flight-status-pill">Готов к выстрелу</span>
+          </div>
+
+          <div class="flip-clock-wrap" id="flip-clock">
+            <div class="flip-group">
+              <div class="flip-unit" id="flip-m1"><div class="flip-half flip-top"><span>0</span></div><div class="flip-half flip-bottom"><span>0</span></div></div>
+              <div class="flip-unit" id="flip-m2"><div class="flip-half flip-top"><span>0</span></div><div class="flip-half flip-bottom"><span>0</span></div></div>
+            </div>
+            <div class="flip-sep">:</div>
+            <div class="flip-group">
+              <div class="flip-unit" id="flip-s1"><div class="flip-half flip-top"><span>0</span></div><div class="flip-half flip-bottom"><span>0</span></div></div>
+              <div class="flip-unit" id="flip-s2"><div class="flip-half flip-top"><span>0</span></div><div class="flip-half flip-bottom"><span>0</span></div></div>
+            </div>
+          </div>
+
+          <div class="trajectory-box">
+            <svg class="trajectory-svg" id="trajectory-svg" viewBox="0 0 320 138" preserveAspectRatio="none"></svg>
+          </div>
+
+          <div class="krasnopol-flight-bar" id="krasnopol-flight-bar" style="display: none;">
+            <span><i class="fas fa-bullseye"></i> Подсветка лазера (2/3):</span>
+            <span id="krasnopol-laser-timer">—</span>
+          </div>
+
+          <button type="button" class="btn btn-fire" id="fire-shot-btn">
+            <i class="fas fa-bomb"></i> Выстрел
+          </button>
+        </div>
+      </div>
+
+      <!-- КАРТОЧКА "РУЧНОЙ ВВОД": все числа из формулы вводятся вручную, расчет производится по формуле -->
+      <div class="calculator-card" id="manual-input-section" style="display:none;">
+        <div class="section-title"><i class="fas fa-keyboard"></i>Ручной ввод</div>
+
+        <div class="manual-grid">
+          <div class="input-group">
+            <label><i class="fas fa-angle-up"></i> Верхний элеватор (0-1600)</label>
+            <input type="number" id="manual-elev-top" placeholder="верхний элеватор" min="0" max="1600" step="1">
+          </div>
+          <div class="input-group">
+            <label><i class="fas fa-angle-down"></i> Нижний элеватор (0-1600)</label>
+            <input type="number" id="manual-elev-bottom" placeholder="нижний элеватор" min="0" max="1600" step="1">
+          </div>
+          <div class="input-group">
+            <label><i class="fas fa-arrows-alt-v"></i> Шаг дальности</label>
+            <input type="number" id="manual-range-step" placeholder="шаг дальности" min="0">
+          </div>
+          <div class="input-group">
+            <label><i class="fas fa-bullseye"></i> Дальность до цели (м)</label>
+            <input type="number" id="manual-distance" placeholder="дальность до цели" min="0">
+          </div>
+          <div class="input-group">
+            <label><i class="fas fa-crosshairs"></i> Дальность верхнего прицела</label>
+            <input type="number" id="manual-elev-range" placeholder="дальность верхнего прицела" min="0">
+          </div>
+          <div class="input-group">
+            <label><i class="fas fa-mountain"></i> Своя высота (м)</label>
+            <input type="number" id="manual-own-height" placeholder="0">
+          </div>
+          <div class="input-group">
+            <label><i class="fas fa-mountain"></i> Высота цели (м)</label>
+            <input type="number" id="manual-target-height" placeholder="0">
+          </div>
+          <div class="input-group">
+            <label><i class="fas fa-arrows-alt-h"></i> Поправка на разн. выс.</label>
+            <input type="number" id="manual-height-ratio" placeholder="0">
+          </div>
+        </div>
+
+        <div class="buttons">
+          <button class="btn btn-calculate" id="calculate-manual"><i class="fas fa-calculator"></i> Расчитать</button>
+          <button class="btn btn-reset" id="reset-manual"><i class="fas fa-redo"></i> Сброс</button>
+        </div>
+
+        <div class="results" id="results-manual">
+          <h3 style="font-size:1.2rem;"><i class="fas fa-chart-line"></i> Расчет</h3>
+          <div class="result-grid" style="margin-top:0;">
+            <div class="result-item"><div class="result-label">Элеватор</div><div class="result-value angle" id="manual-res-elevation">0</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="history-card">
+        <div class="section-title">
+          <i class="fas fa-history"></i> История
+          <span class="badge" id="history-count">0</span>
+          <button class="share-btn" id="share-history-btn">
+            <i class="fas fa-share-alt"></i> Поделиться
+          </button>
+        </div>
+        <div class="history-content">
+          <div class="no-history" id="no-history"><i class="fas fa-history fa-2x"></i><p>Нет расчетов</p></div>
+          <table class="history-table" id="history-table" style="display: none;">
+            <thead><tr><th>Орудие</th><th>Дальн.</th><th>Заряд</th><th>Элев.</th><th>Время</th></tr></thead>
+            <tbody id="history-table-body"></tbody>
+          </table>
+        </div>
+        <div class="restart-section">
+          <h3><i class="fas fa-power-off"></i> Перезапуск</h3>
+          <button class="btn" id="full-restart">Полный сброс</button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="version-info" id="appVersionDisplay"></div>
+    
+    <footer>Создан Романовым А. В. / моб. версия</footer>
+  </div>
+</div>
+
+<!-- МОДАЛЬНЫЕ ОКНА -->
+<div id="detail-modal" class="modal">
+  <div class="modal-content">
+    <h3><i class="fas fa-info-circle"></i> Детали расчета</h3>
+    <div id="modal-detail" class="modal-detail"></div>
+    <button class="close-modal" onclick="closeModal()">Закрыть</button>
+  </div>
+</div>
+
+<div id="qr-modal" class="modal">
+  <div class="modal-content" style="max-width:420px; text-align:center;">
+    <h3><i class="fas fa-qrcode"></i> QR-код для истории</h3>
+    <div id="qr-code-container"></div>
+    <p style="font-size:0.9rem; color:#555;">Ссылка действительна <strong>24 часа</strong></p>
+    <p id="qr-link-display" style="font-size:0.7rem; word-break:break-all; background:rgba(241,243,245,0.7); padding:8px; border-radius:8px; margin-top:8px;"></p>
+    <button class="close-modal" onclick="closeQRModal()">Закрыть</button>
+  </div>
+</div>
+
+<!-- СОБСТВЕННОЕ УВЕДОМЛЕНИЕ КАЛЬКУЛЯТОРА (вместо системного alert) -->
+<div id="alert-modal" class="modal">
+  <div class="modal-content alert-content">
+    <h3><i class="fas fa-exclamation-triangle"></i> <span id="alert-title">Ошибка</span></h3>
+    <div id="alert-body" class="alert-body"></div>
+    <div class="alert-buttons">
+      <button class="close-modal btn-primary" id="alert-ok-btn">Понятно</button>
+      <button class="close-modal btn-danger" id="alert-confirm-btn" style="display:none;">Удалить</button>
+      <button class="close-modal btn-cancel" id="alert-cancel-btn" style="display:none;">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script>
+// ====================================================================
+// ==== ДВИЖОК АНИМАЦИЙ (ОДОМЕТР, КОНСТРУКТОР, МОДАЛКИ, RIPPLE) =======
+// ====================================================================
+
+function triggerHaptic(pattern) {
+  try {
+    if (navigator && typeof navigator.vibrate === 'function') {
+      navigator.vibrate(pattern || 8);
+    }
+  } catch (e) {}
+}
+
+// Анимация прокрутки цифр как на барабанных часах / одометре
+function animateOdometerValue(el, newValue) {
+  if (!el) return;
+  const text = String(newValue ?? '');
+  const prevText = el.getAttribute('data-odo-prev') || '';
+  el.setAttribute('data-odo-prev', text);
+
+  // Если чисто текстовое слово без цифр (например, "Мортирный" / "Настильный")
+  if (!/\d/.test(text)) {
+    el.innerHTML = '<span class="odo-static">' + text + '</span>';
+    return;
+  }
+
+  const prevDigits = prevText.replace(/\D/g, '');
+  el.innerHTML = '';
+  const wrap = document.createElement('span');
+  wrap.className = 'odometer-wrap';
+
+  let digitIdx = 0;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch >= '0' && ch <= '9') {
+      const targetDigit = parseInt(ch, 10);
+      const startDigit = (digitIdx < prevDigits.length)
+        ? parseInt(prevDigits[digitIdx], 10)
+        : (targetDigit + 5) % 10;
+
+      const win = document.createElement('span');
+      win.className = 'odo-digit-window';
+
+      const ribbon = document.createElement('span');
+      ribbon.className = 'odo-ribbon';
+
+      // Создаем 2 полных оборота цифр (0..9, 0..9), чтобы лента красиво крутилась вперед
+      const sequence = [];
+      for (let cycle = 0; cycle < 2; cycle++) {
+        for (let d = 0; d <= 9; d++) {
+          sequence.push(d);
+        }
+      }
+      sequence.forEach(num => {
+        const cell = document.createElement('span');
+        cell.className = 'odo-cell';
+        cell.textContent = String(num);
+        ribbon.appendChild(cell);
+      });
+
+      const startIndex = startDigit;
+      let targetIndex = 10 + targetDigit;
+      if (targetIndex <= startIndex) targetIndex += 10;
+
+      const duration = 1200 + digitIdx * 180;
+      ribbon.style.transition = 'none';
+      ribbon.style.transform = 'translateY(-' + (startIndex * 1.2) + 'em)';
+
+      win.appendChild(ribbon);
+      wrap.appendChild(win);
+
+      (function (rb, tgtIdx, dur) {
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            rb.style.transition = 'transform ' + dur + 'ms cubic-bezier(0.16, 1, 0.3, 1)';
+            rb.style.transform = 'translateY(-' + (tgtIdx * 1.2) + 'em)';
+          });
+        });
+      })(ribbon, targetIndex, duration);
+
+      digitIdx++;
+    } else {
+      const stat = document.createElement('span');
+      stat.className = 'odo-static';
+      stat.textContent = ch;
+      wrap.appendChild(stat);
+    }
+  }
+
+  el.appendChild(wrap);
+}
+
+// Плавное открытие и закрытие модальных окон с пружиной
+function openModalAnimated(modalEl) {
+  if (!modalEl) return;
+  clearTimeout(modalEl._closeTimer);
+  modalEl.classList.remove('modal-closing');
+  modalEl.style.display = 'flex';
+
+  // Каскадная нумерация строчек внутри деталей
+  const detailRows = modalEl.querySelectorAll('.modal-detail > p, .modal-detail .history-detail-item, .modal-detail .manual-value-chip');
+  detailRows.forEach(function (row, idx) {
+    row.style.setProperty('--detail-idx', idx);
+    row.style.setProperty('--chip-idx', idx);
+  });
+
+  requestAnimationFrame(function () {
+    modalEl.classList.add('modal-open');
+  });
+  triggerHaptic(10);
+}
+
+function closeModalAnimated(modalEl) {
+  if (!modalEl || modalEl.style.display === 'none') return;
+  modalEl.classList.remove('modal-open');
+  modalEl.classList.add('modal-closing');
+  clearTimeout(modalEl._closeTimer);
+  modalEl._closeTimer = setTimeout(function () {
+    modalEl.classList.remove('modal-closing');
+    modalEl.style.display = 'none';
+  }, 220);
+}
+
+// Плавное открытие и закрытие выпадающего списка орудий ("Конструктор")
+function openWeaponListAnimated() {
+  const list = document.getElementById('weapon-list');
+  const btn = document.getElementById('weapon-btn');
+  if (!list) return;
+  clearTimeout(list._closeTimer);
+  const items = list.querySelectorAll('.weapon-item');
+  const total = items.length;
+  items.forEach(function (item, idx) {
+    item.style.setProperty('--item-idx', idx);
+    item.style.setProperty('--rev-idx', Math.max(0, total - 1 - idx));
+  });
+  list.classList.remove('closing');
+  list.classList.add('show');
+  if (btn) btn.classList.add('open');
+  triggerHaptic(8);
+}
+
+function closeWeaponListAnimated() {
+  const list = document.getElementById('weapon-list');
+  const btn = document.getElementById('weapon-btn');
+  if (!list || (!list.classList.contains('show') && !list.classList.contains('closing'))) return;
+  if (btn) btn.classList.remove('open');
+  const items = list.querySelectorAll('.weapon-item');
+  const total = items.length;
+  items.forEach(function (item, idx) {
+    item.style.setProperty('--rev-idx', Math.max(0, total - 1 - idx));
+  });
+  list.classList.remove('show');
+  list.classList.add('closing');
+  clearTimeout(list._closeTimer);
+  list._closeTimer = setTimeout(function () {
+    list.classList.remove('closing');
+  }, 270);
+}
+
+function toggleWeaponListAnimated() {
+  const list = document.getElementById('weapon-list');
+  if (!list) return;
+  if (list.classList.contains('show')) {
+    closeWeaponListAnimated();
+  } else {
+    openWeaponListAnimated();
+  }
+}
+
+// Световая волна (Ripple) на всех кнопках и интерактивных элементах
+document.addEventListener('pointerdown', function (e) {
+  const target = e.target.closest('.btn, .weapon-btn, .weapon-item, .close-modal, .share-btn, #alert-ok-btn');
+  if (!target) return;
+  const rect = target.getBoundingClientRect();
+  const wave = document.createElement('span');
+  wave.className = 'ripple-wave';
+  const size = Math.max(rect.width, rect.height);
+  wave.style.width = wave.style.height = size + 'px';
+  wave.style.left = (e.clientX - rect.left - size / 2) + 'px';
+  wave.style.top = (e.clientY - rect.top - size / 2) + 'px';
+  target.appendChild(wave);
+  setTimeout(function () {
+    if (wave.parentNode) wave.parentNode.removeChild(wave);
+  }, 560);
+});
+
+// ====================================================================
+// ==================== СЕКРЕТНЫЙ КЛЮЧ (РАЗДЕЛЕН) ====================
+// ====================================================================
+
+const SECRET_KEY_PART1 = 'ghp_Q3qOiuPURnOeug2JUeJe3A6ixP31c';
+const SECRET_KEY_PART2 = 'o4Sls4a';
+const SECRET_KEY = SECRET_KEY_PART1 + SECRET_KEY_PART2;
+
+// ====================================================================
+// ============ УРОВНИ ДОСТУПА И ПИН-КОДЫ (4 УРОВНЯ) ==================
+// ====================================================================
+const ACCESS_LEVEL_1_PASSWORD = '1349';
+const ACCESS_LEVEL_2_PASSWORD = '9784';
+const ACCESS_LEVEL_3_PASSWORD = '1845';
+const ACCESS_LEVEL_4_PASSWORD = '2001';
+
+const ACCESS_LEVEL_PASSWORDS = {
+  [ACCESS_LEVEL_1_PASSWORD]: 1,
+  [ACCESS_LEVEL_2_PASSWORD]: 2,
+  [ACCESS_LEVEL_3_PASSWORD]: 3,
+  [ACCESS_LEVEL_4_PASSWORD]: 4
+};
+
+const ACCESS_LEVEL_COUNT = 4;
+const MAX_ACCESS_LEVEL = 4;
+const APP_VERSION = '9.3.0';
+
+class UpdateManager {
+  constructor() {
+    this.VERSION_URL = 'https://raw.githubusercontent.com/chanatri1-stack/artballcalc/main/version.json';
+    this.CURRENT_VERSION = APP_VERSION;
+  }
+  
+  async checkForUpdate() {
+    try {
+      const response = await fetch(this.VERSION_URL + '?t=' + Date.now());
+      if (!response.ok) return { hasUpdate: false };
+      const data = await response.json();
+      const hasUpdate = this.compareVersions(this.CURRENT_VERSION, data.version) < 0;
+      return {
+        hasUpdate: hasUpdate,
+        currentVersion: this.CURRENT_VERSION,
+        newVersion: data.version || 'неизвестно'
+      };
+    } catch(e) {
+      console.error('Ошибка проверки обновлений:', e);
+      return { hasUpdate: false };
+    }
+  }
+  
+  compareVersions(v1, v2) {
+    const parts1 = v1.split('.').map(Number);
+    const parts2 = v2.split('.').map(Number);
+    for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+      const n1 = parts1[i] || 0;
+      const n2 = parts2[i] || 0;
+      if (n1 !== n2) return n1 - n2;
+    }
+    return 0;
+  }
+}
+
+// ====================================================================
+// ==================== ФУНКЦИИ РАБОТЫ С GIST ========================
+// ====================================================================
+
+async function saveHistoryToGist(historyData) {
+  const gistId = localStorage.getItem('current_gist_id');
+  const method = gistId ? 'PATCH' : 'POST';
+  const url = gistId 
+    ? `https://api.github.com/gists/${gistId}`
+    : 'https://api.github.com/gists';
+
+  const payload = {
+    description: 'История расчётов артиллерийского калькулятора',
+    public: false,
+    files: {
+      'history.json': {
+        content: JSON.stringify({
+          version: APP_VERSION,
+          timestamp: new Date().toISOString(),
+          history: historyData
+        }, null, 2)
+      }
+    }
+  };
+
+  try {
+    const response = await fetch(url, {
+      method: method,
+      headers: {
+        'Authorization': `token ${SECRET_KEY}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) throw new Error(`GitHub API error: ${response.status}`);
+
+    const data = await response.json();
+    if (!gistId) localStorage.setItem('current_gist_id', data.id);
+    return { success: true, gistId: data.id, htmlUrl: data.html_url };
+  } catch (error) {
+    console.error('Ошибка сохранения в Gist:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+async function loadHistoryFromGist(gistId) {
+  try {
+    const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+      headers: { 'Accept': 'application/json' }
+    });
+    if (!response.ok) throw new Error(`GitHub API error: ${response.status}`);
+    const gist = await response.json();
+    const files = gist.files;
+    let content = null;
+    for (const filename in files) {
+      if (filename.endsWith('.json')) {
+        content = files[filename].content;
+        break;
+      }
+    }
+    if (!content) throw new Error('Файл history.json не найден в Gist');
+    const data = JSON.parse(content);
+    return {
+      success: true,
+      history: data.history || [],
+      version: data.version || 'неизвестно',
+      timestamp: data.timestamp || null
+    };
+  } catch (error) {
+    console.error('Ошибка загрузки из Gist:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// ====================================================================
+// ==================== ГЛАВНАЯ ЛОГИКА ===============================
+// ====================================================================
+
+const updateManager = new UpdateManager();
+
+function updateProgress(text, percent) {
+  document.getElementById('loading-status').textContent = text;
+  document.getElementById('progress-fill').style.width = Math.min(100, percent) + '%';
+}
+
+async function startApp() {
+  try {
+    updateProgress('🔍 Проверка обновлений...', 30);
+    const updateInfo = await updateManager.checkForUpdate();
+    
+    if (updateInfo.hasUpdate) {
+      document.getElementById('loading-screen').classList.add('hidden');
+      document.getElementById('update-screen').classList.add('active');
+      document.getElementById('update-current-version').textContent = updateInfo.currentVersion;
+      document.getElementById('update-new-version').textContent = updateInfo.newVersion;
+      return;
+    }
+    
+    document.getElementById('loading-screen').classList.add('hidden');
+    document.getElementById('login-screen').classList.add('active');
+    document.getElementById('appVersionDisplay').textContent = 'Версия: ' + APP_VERSION;
+    document.getElementById('loading-version').textContent = 'Версия: ' + APP_VERSION;
+  } catch(e) {
+    console.error('Ошибка запуска:', e);
+    document.getElementById('loading-status').textContent = '❌ Ошибка запуска. Перезагрузите приложение.';
+  }
+}
+
+function login() {
+  const pinInput = document.getElementById('pin-input');
+  const statusEl = document.getElementById('login-status');
+  const loginBtn = document.getElementById('login-btn');
+  const loginCard = document.getElementById('login-card-box');
+  const pin = pinInput.value.trim();
+  
+  pinInput.classList.remove('error');
+  
+  if (!pin) {
+    pinInput.classList.add('error');
+    statusEl.textContent = '❌ Введите код доступа';
+    statusEl.className = 'status error';
+    triggerHaptic([20, 40, 20]);
+    return;
+  }
+  
+  loginBtn.disabled = true;
+  statusEl.textContent = '⏳ Проверка...';
+  statusEl.className = 'status loading';
+  
+  setTimeout(() => {
+    const accessLevel = ACCESS_LEVEL_PASSWORDS[pin];
+    if (accessLevel) {
+      triggerHaptic([12, 30, 18]);
+      localStorage.setItem('app_access_level', String(accessLevel));
+      statusEl.textContent = '✅ Доступ разрешен! (уровень ' + accessLevel + ')';
+      statusEl.className = 'status success';
+      localStorage.removeItem('app_pin');
+      if (loginCard) loginCard.classList.add('closing');
+      setTimeout(() => {
+        if (loginCard) loginCard.classList.remove('closing');
+        document.getElementById('login-screen').classList.remove('active');
+        document.getElementById('login-screen').classList.add('hidden');
+        const transitionScreen = document.getElementById('transition-screen');
+        transitionScreen.classList.add('active');
+        setTimeout(() => {
+          transitionScreen.classList.remove('active');
+          document.getElementById('app-container').classList.add('active');
+          if (typeof initializeApp === 'function') {
+            initializeApp();
+          }
+        }, 1600);
+      }, 300);
+    } else {
+      triggerHaptic([30, 50, 30]);
+      statusEl.textContent = '❌ Неверный код доступа';
+      statusEl.className = 'status error';
+      pinInput.classList.add('error');
+      pinInput.value = '';
+      pinInput.focus();
+    }
+    loginBtn.disabled = false;
+  }, 450);
+}
+
+document.getElementById('pin-input').addEventListener('input', function() {
+  this.classList.remove('error');
+  document.getElementById('login-status').textContent = '';
+  document.getElementById('login-status').className = 'status';
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    const active = document.activeElement;
+    if (active && active.id === 'pin-input') {
+      login();
+    }
+  }
+});
+
+window.addEventListener('beforeunload', function(e) {
+  const appContainer = document.getElementById('app-container');
+  if (appContainer.classList.contains('active')) {
+    e.preventDefault();
+    e.returnValue = 'Вы уверены, что хотите перезагрузить страницу? Все несохранённые данные будут потеряны.';
+    return e.returnValue;
+  }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  const versionTargets = [
+    { el: document.getElementById('loading-version'), text: 'Версия: ' + APP_VERSION },
+    { el: document.getElementById('appVersionDisplay'), text: 'Версия: ' + APP_VERSION },
+    { el: document.getElementById('update-current-version'), text: APP_VERSION },
+    { el: document.getElementById('update-new-version'), text: APP_VERSION }
+  ];
+  versionTargets.forEach(function(item) {
+    if (item.el) item.el.textContent = item.text;
+  });
+  const versionMeta = document.querySelector('meta[name="app-version"]');
+  if (versionMeta) versionMeta.setAttribute('content', APP_VERSION);
+
+  document.getElementById('app-container').classList.remove('active');
+  document.getElementById('login-screen').classList.remove('active');
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('update-screen').classList.remove('active');
+  startApp();
+});
+
+// ====================================================================
+// ==================== КАЛЬКУЛЯТОР ==================================
+// ====================================================================
+
+function initializeApp() {
+  document.getElementById('appVersionDisplay').textContent = 'Версия: ' + APP_VERSION;
+
+  let currentWeapon = null;
+  let isFlatTrajectory = false;
+  let calculationHistory = [];
+  let lastCalcMode = 'mortar'; // запоминаем, что считали последним: 'mortar' или 'redpoly'
+
+  const MANUAL_MODE = 'MANUAL_INPUT';
+
+  function getAvailableWeapons() {
+    const weapons = new Set();
+    Object.keys(mortarData).forEach(key => weapons.add(key));
+    Object.keys(flatData).forEach(key => weapons.add(key));
+    const sorted = Array.from(weapons).sort((a, b) => getWeaponAccessLevel(a) - getWeaponAccessLevel(b));
+    return [MANUAL_MODE].concat(sorted);
+  }
+
+  function getWeaponAccessLevel(weapon) {
+    switch (weapon) {
+      case MANUAL_MODE: return 1;
+      case '2B14': case '2B11': case 'Hilux': return 2;
+      case '2B26': case 'TornadoS': return 4;
+      default: return 3;
+    }
+  }
+
+  function getCurrentAccessLevel() {
+    const saved = parseInt(localStorage.getItem('app_access_level')) || 0;
+    return Math.min(Math.max(saved, 0), MAX_ACCESS_LEVEL);
+  }
+
+  function isWeaponUnlocked(weapon) {
+    return getWeaponAccessLevel(weapon) <= getCurrentAccessLevel();
+  }
+
+  function getRequiredLevelText(weapon) {
+    const lvl = getWeaponAccessLevel(weapon);
+    if (lvl === 1) return 'доступен с 1 уровня';
+    return 'доступно с ' + lvl + ' уровня';
+  }
+
+  function renderManualValuesGrid(gridEl, vals) {
+    if (!gridEl) return;
+    gridEl.innerHTML = '';
+    vals.forEach((v, idx) => {
+      if (!v || v.value === undefined || v.value === null || v.value === '' || isNaN(v.value)) return;
+      const chip = document.createElement('div');
+      chip.className = 'manual-value-chip';
+      chip.style.setProperty('--chip-idx', idx);
+      chip.innerHTML = '<span class="mv-label">' + v.label + '</span><span class="mv-value">' + v.value + '</span>';
+      gridEl.appendChild(chip);
+    });
+  }
+
+  function readManualValues() {
+    const g = id => document.getElementById(id);
+    return {
+      elevTop: parseFloat(g('manual-elev-top').value),
+      elevBottom: parseFloat(g('manual-elev-bottom').value),
+      rangeStep: parseFloat(g('manual-range-step').value),
+      distance: parseFloat(g('manual-distance').value),
+      elevRange: parseFloat(g('manual-elev-range').value),
+      ownHeight: parseFloat(g('manual-own-height').value) || 0,
+      targetHeight: parseFloat(g('manual-target-height').value) || 0,
+      heightRatio: parseFloat(g('manual-height-ratio').value) || 0
+    };
+  }
+
+  const MANUAL_ELEV_MIN = 0;
+  const MANUAL_ELEV_MAX = 1600;
+
+  function validateManualInput() {
+    const v = readManualValues();
+    if (isNaN(v.elevTop)) { alert('Введите верхний элеватор'); return null; }
+    if (isNaN(v.elevBottom)) { alert('Введите нижний элеватор'); return null; }
+    if (isNaN(v.rangeStep) || v.rangeStep <= 0) { alert('Введите шаг дальности (больше 0)'); return null; }
+    if (isNaN(v.distance) || v.distance <= 0) { alert('Введите дальность до цели (м)'); return null; }
+    if (isNaN(v.elevRange)) { alert('Введите дальность верхнего прицела'); return null; }
+    if (isNaN(v.ownHeight)) { alert('Введите свою высоту (м)'); return null; }
+    if (isNaN(v.targetHeight)) { alert('Введите высоту цели (м)'); return null; }
+    if (isNaN(v.heightRatio)) { alert('Введите поправку на разн. выс.'); return null; }
+
+    if (v.elevTop < MANUAL_ELEV_MIN || v.elevTop > MANUAL_ELEV_MAX) {
+      alert('Верхний элеватор должен быть от ' + MANUAL_ELEV_MIN + ' до ' + MANUAL_ELEV_MAX);
+      return null;
+    }
+    if (v.elevBottom < MANUAL_ELEV_MIN || v.elevBottom > MANUAL_ELEV_MAX) {
+      alert('Нижний элеватор должен быть от ' + MANUAL_ELEV_MIN + ' до ' + MANUAL_ELEV_MAX);
+      return null;
+    }
+    return v;
+  }
+
+  function calculateManualFormula(v) {
+    const rangeCorr = v.elevTop - ((v.elevTop - v.elevBottom) / v.rangeStep) * (v.distance - v.elevRange);
+    const heightCorr = ((v.ownHeight - v.targetHeight) / 100) * v.heightRatio;
+    const elevation = heightCorr + rangeCorr;
+    return {
+      rangeCorr: rangeCorr,
+      heightCorr: heightCorr,
+      elevation: elevation
+    };
+  }
+
+  function buildManualChipsList(v) {
+    return [
+      { label: 'Верхний элеватор:', value: v.elevTop },
+      { label: 'Нижний элеватор:', value: v.elevBottom },
+      { label: 'Шаг дальности:', value: v.rangeStep },
+      { label: 'Дальность до цели:', value: Math.round(v.distance) + ' м' },
+      { label: 'Дальность верхнего прицела:', value: Math.round(v.elevRange) },
+      { label: 'Своя высота:', value: (v.ownHeight || 0) + ' м' },
+      { label: 'Высота цели:', value: (v.targetHeight || 0) + ' м' },
+      { label: 'Поправка на разн. выс.:', value: v.heightRatio || 0 }
+    ];
+  }
+
+  function getWeaponName(weaponKey) {
+    if (weaponKey === MANUAL_MODE) return 'Ручной ввод';
+    if (mortarData[weaponKey]) return mortarData[weaponKey].name;
+    if (flatData[weaponKey]) return flatData[weaponKey].name;
+    return weaponKey;
+  }
+
+  function getCurrentDataSource() { 
+    return isFlatTrajectory ? flatData[currentWeapon] : mortarData[currentWeapon]; 
+  }
+
+  function hasWeaponData() {
+    if (currentWeapon === MANUAL_MODE) return true;
+    return !!(mortarData[currentWeapon] || flatData[currentWeapon]);
+  }
+
+  function getGlobalRange() {
+    const src = getCurrentDataSource();
+    if (!src || !src.ranges) return { min: 0, max: 20000 };
+    let minVal = Infinity, maxVal = -Infinity;
+    src.ranges.forEach(r => { if (r.min < minVal) minVal = r.min; if (r.max > maxVal) maxVal = r.max; });
+    return { min: minVal, max: maxVal };
+  }
+
+  function getChargeRange(charge) {
+    const src = getCurrentDataSource();
+    if (!src || !src.ranges) return null;
+    return src.ranges.find(r => r.charge == charge) || null;
+  }
+
+  function isDistanceInAnyChargeRange(dist) {
+    const src = getCurrentDataSource();
+    if (!src || !src.ranges) return false;
+    return src.ranges.some(r => dist >= r.min && dist <= r.max);
+  }
+
+  function getValidChargesList() {
+    const src = getCurrentDataSource();
+    if (!src || !src.ranges) return [];
+    return src.ranges.map(r => Number(r.charge)).sort((a, b) => a - b);
+  }
+
+  function validateChargeInput(clampValue = false) {
+    const chargeInput = document.getElementById('charge');
+    const errorDiv = document.getElementById('charge-error');
+    const rangeDiv = document.getElementById('charge-range');
+    const src = getCurrentDataSource();
+
+    if (!src || !src.ranges || src.ranges.length === 0) {
+      chargeInput.removeAttribute('max');
+      rangeDiv.textContent = '';
+      errorDiv.classList.remove('show');
+      chargeInput.classList.remove('error');
+      return false;
+    }
+
+    const validCharges = getValidChargesList();
+    const minC = src.minCharge !== undefined ? src.minCharge : validCharges[0];
+    const maxC = src.maxCharge !== undefined ? src.maxCharge : validCharges[validCharges.length - 1];
+    const stepC = src.step || 1;
+
+    chargeInput.min = minC;
+    chargeInput.max = maxC;
+    chargeInput.step = stepC;
+
+    rangeDiv.textContent = stepC > 1
+      ? `Допустимые заряды: ${validCharges.join(', ')}`
+      : `Допустимый диапазон зарядов: ${minC} - ${maxC}`;
+
+    let raw = chargeInput.value.trim() === '' ? minC : parseInt(chargeInput.value, 10);
+
+    if (clampValue && !isNaN(raw)) {
+      if (raw > maxC) {
+        raw = maxC;
+        chargeInput.value = maxC;
+      } else if (raw < minC) {
+        raw = minC;
+        chargeInput.value = minC;
+      } else if (!validCharges.includes(raw)) {
+        // Для орудий с шагом (например, 2Б26: 0, 2, 4...) подбираем ближайший существующий заряд
+        raw = validCharges.reduce((prev, curr) =>
+          Math.abs(curr - raw) < Math.abs(prev - raw) ? curr : prev
+        );
+        chargeInput.value = raw;
+      }
+    }
+
+    if (isNaN(raw) || chargeInput.value.trim() === '') {
+      chargeInput.classList.add('error');
+      errorDiv.innerText = `Введите номер заряда (${minC} - ${maxC})`;
+      errorDiv.classList.add('show');
+      return false;
+    }
+
+    if (raw < minC || raw > maxC || !validCharges.includes(raw)) {
+      chargeInput.classList.add('error');
+      errorDiv.innerText = stepC > 1
+        ? `Недоступный заряд! Доступны только: ${validCharges.join(', ')}`
+        : `Номер заряда должен быть от ${minC} до ${maxC}`;
+      errorDiv.classList.add('show');
+      return false;
+    }
+
+    chargeInput.classList.remove('error');
+    errorDiv.classList.remove('show');
+    return true;
+  }
+
+  function validateDistanceInput() {
+    const distInput = document.getElementById('distance');
+    const errorDiv = document.getElementById('distance-error');
+    const auto = document.getElementById('auto-charge-toggle').checked;
+    let rawValue = parseFloat(distInput.value);
+    let isValid = true;
+    let errorMsg = '';
+    let minD = 0, maxD = 0;
+
+    if (!hasWeaponData()) {
+      distInput.classList.add('error');
+      errorDiv.innerText = '⚠️ Нет данных для выбранного орудия. Заполните mortarData или flatData.';
+      errorDiv.classList.add('show');
+      document.getElementById('distance-range').innerHTML = '⚠️ Заполните данные для орудия';
+      return false;
+    }
+
+    if (auto) {
+      const global = getGlobalRange();
+      minD = global.min;
+      maxD = global.max;
+    } else {
+      const srcForCharge = getCurrentDataSource();
+   const defaultCharge = srcForCharge?.minCharge ?? 0;
+   let charge = document.getElementById('charge').value.trim() === ''
+     ? defaultCharge
+     : parseInt(document.getElementById('charge').value, 10);
+      const rangeObj = getChargeRange(charge);
+      if (rangeObj) {
+        minD = rangeObj.min;
+        maxD = rangeObj.max;
+      } else {
+        minD = 0;
+        maxD = 20000;
+      }
+    }
+
+    if (distInput.value.trim() === '') {
+      distInput.classList.remove('error');
+      errorDiv.classList.remove('show');
+      document.getElementById('distance-range').innerHTML = `Допустимый диапазон: ${minD} - ${maxD} м`;
+      return false;
+    } else if (isNaN(rawValue)) {
+      isValid = false;
+      errorMsg = `Введите числовое значение (${minD} - ${maxD} м)`;
+    } else if (rawValue < minD) {
+      isValid = false;
+      errorMsg = `Дальность не может быть меньше ${minD} м`;
+    } else if (rawValue > maxD) {
+      isValid = false;
+      errorMsg = `Дальность не может быть больше ${maxD} м`;
+    } else if (auto && !isDistanceInAnyChargeRange(rawValue)) {
+      isValid = false;
+      errorMsg = 'Дальность не попадает в диапазон зарядов';
+    }
+
+    if (!isValid) {
+      distInput.classList.add('error');
+      errorDiv.innerText = errorMsg;
+      errorDiv.classList.add('show');
+    } else {
+      distInput.classList.remove('error');
+      errorDiv.classList.remove('show');
+    }
+
+    document.getElementById('distance-range').innerHTML = `Допустимый диапазон: ${minD} - ${maxD} м`;
+    return isValid;
+  }
+
+  function findBestChargeAuto(dist, oh, th) {
+    const src = getCurrentDataSource();
+    if (!src) return src.minCharge || 0;
+    let bestCharge = src.minCharge || 0;
+    let found = false;
+    for (let c = src.minCharge || 0; c <= (src.maxCharge || 0); c += (src.step || 1)) {
+      const rangeObj = src.ranges.find(r => r.charge == c);
+      if (!rangeObj) continue;
+      if (dist < rangeObj.min || dist > rangeObj.max) continue;
+      const table = src.data[c];
+      if (!table) continue;
+      let sorted = [...table].sort((a,b)=>a[0]-b[0]);
+      for (let i=0; i<sorted.length-1; i++) {
+        if (sorted[i][0] <= dist && dist <= sorted[i+1][0]) {
+          bestCharge = c;
+          found = true;
+          break;
+        }
+      }
+      if (found) break;
+    }
+    return found ? bestCharge : (src.minCharge || 0);
+  }
+
+  function getUpperLowerData(table, dist) {
+    let sorted = [...table].sort((a, b) => a[0] - b[0]);
+
+    if (dist < sorted[0][0]) {
+      return { upper: sorted[0], lower: sorted[1], exact: false };
+    }
+    if (dist > sorted[sorted.length - 1][0]) {
+      return { upper: sorted[sorted.length - 2], lower: sorted[sorted.length - 1], exact: false };
+    }
+
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const current = sorted[i];
+      const next = sorted[i + 1];
+      if (dist >= current[0] && dist <= next[0]) {
+        if (dist === current[0]) {
+          return { exactMatch: current, exact: true };
+        }
+        if (dist === next[0]) {
+          return { exactMatch: next, exact: true };
+        }
+        return { upper: current, lower: next, exact: false };
+      }
+    }
+    return null;
+  }
+
+  function calculateFull(dist, oh, th, charge = null, forceCharge = false) {
+    const src = getCurrentDataSource();
+    if (!src) throw new Error('Нет данных для выбранного орудия');
+
+    const auto = document.getElementById('auto-charge-toggle').checked;
+    let effectiveCharge = charge;
+
+    if (!forceCharge && auto) {
+      effectiveCharge = findBestChargeAuto(dist, oh, th);
+    } else if (effectiveCharge === null) {
+      effectiveCharge = src.minCharge || 0;
+    }
+
+    const table = src.data[effectiveCharge];
+    if (!table) throw new Error(`Нет таблицы для заряда ${effectiveCharge}`);
+
+    const ud = getUpperLowerData(table, dist);
+    if (!ud) throw new Error('Не удалось определить данные для интерполяции');
+
+    let finalElev, flightTime, rangeCorr, heightCorr;
+    const heightDiff = oh - th;
+
+    if (ud.exact) {
+      const exactRow = ud.exactMatch;
+      const baseElev = exactRow[1];
+      flightTime = exactRow[4] || 0;
+      const heightCorrRaw = exactRow[2] || 0;
+      heightCorr = (heightDiff / 100) * heightCorrRaw;
+      finalElev = baseElev + heightCorr;
+      rangeCorr = baseElev;
+
+      return {
+        elevation: Math.round(Math.max(0, Math.min(1620, finalElev))),
+        flightTime: Math.round(flightTime),
+        charge: effectiveCharge,
+        distance: dist,
+        ownHeight: oh,
+        targetHeight: th,
+        rangeCorrection: Math.round(rangeCorr),
+        heightCorrection: Math.round(heightCorr)
+      };
+    }
+
+    const up = ud.upper;
+    const low = ud.lower;
+
+    const elevInterp = up[1] + ((low[1] - up[1]) / (low[0] - up[0])) * (dist - up[0]);
+    const t1 = up[4] || 0;
+    const t2 = low[4] || 0;
+    const flightTimeInterp = t1 + ((t2 - t1) / (low[0] - up[0])) * (dist - up[0]);
+    const hCorrUp = up[2] || 0;
+    const hCorrLow = low[2] || 0;
+    const heightCorrInterp = hCorrUp + ((hCorrLow - hCorrUp) / (low[0] - up[0])) * (dist - up[0]);
+    const heightCorrectionFinal = (heightDiff / 100) * heightCorrInterp;
+    finalElev = elevInterp + heightCorrectionFinal;
+    rangeCorr = elevInterp;
+
+    return {
+      elevation: Math.round(Math.max(0, Math.min(1620, finalElev))),
+      flightTime: Math.round(flightTimeInterp),
+      charge: effectiveCharge,
+      distance: dist,
+      ownHeight: oh,
+      targetHeight: th,
+      rangeCorrection: Math.round(rangeCorr),
+      heightCorrection: Math.round(heightCorrectionFinal)
+    };
+  }
+
+  function addToHistory(res, type = 'Элеватор', extra = null, manualExtras = null) {
+    const historyWeaponName = (currentWeapon === MANUAL_MODE) ? 'Ручной ввод' :
+      (getCurrentDataSource()?.name || currentWeapon);
+
+    const entry = {
+      id: Date.now(),
+      weapon: historyWeaponName,
+      distance: res.distance,
+      charge: res.charge,
+      elevation: res.elevation,
+      flightTime: res.flightTime,
+      ownHeight: res.ownHeight,
+      targetHeight: res.targetHeight,
+      rangeCorr: res.rangeCorrection,
+      heightCorr: res.heightCorrection,
+      type: type,
+      calculatedAt: new Date().toLocaleString('ru-RU', { hour12: false })
+    };
+    if (extra) {
+      entry.profileTumbler = extra.profileTumbler;
+      entry.delayTumbler = extra.delayTumbler;
+    }
+    if (manualExtras && manualExtras.manualValues) {
+      entry.isManual = true;
+      entry.manualValues = manualExtras.manualValues;
+    }
+    calculationHistory.unshift(entry);
+    if (calculationHistory.length > 50) calculationHistory.pop();
+    updateHistoryDisplay(true);
+  }
+
+  function updateHistoryDisplay(isNewEntry) {
+    const tbody = document.getElementById('history-table-body');
+    tbody.innerHTML = '';
+    const no = document.getElementById('no-history');
+    const table = document.getElementById('history-table');
+    const countBadge = document.getElementById('history-count');
+    if (calculationHistory.length === 0) {
+      no.style.display = 'block';
+      table.style.display = 'none';
+      countBadge.innerText = '0';
+      return;
+    }
+    no.style.display = 'none';
+    table.style.display = 'table';
+    countBadge.innerText = calculationHistory.length;
+    if (isNewEntry) {
+      countBadge.classList.remove('bump');
+      void countBadge.offsetWidth;
+      countBadge.classList.add('bump');
+    }
+    calculationHistory.forEach((e, idx) => {
+      let row = tbody.insertRow();
+      row.style.cursor = 'pointer';
+      row.style.setProperty('--row-idx', Math.min(idx, 10));
+      row.className = (isNewEntry && idx === 0) ? 'history-row-fresh' : 'history-row-enter';
+      row.addEventListener('click', () => showDetailModal(e));
+      row.innerHTML = `<td>${e.weapon}</td><td>${Math.round(e.distance)}</td><td>${e.charge ?? '—'}</td><td>${Math.round(e.elevation)}</td><td>${e.flightTime || 0} сек</td>`;
+    });
+  }
+
+  function showDetailModal(entry) {
+    const modal = document.getElementById('detail-modal');
+    const container = document.getElementById('modal-detail');
+    let html = '';
+
+    if (Array.isArray(entry)) {
+      html = '<h4 style="margin-bottom:12px;">📋 Общая история расчётов</h4><hr>';
+      entry.forEach((e, index) => {
+        let manualHtml = '';
+        if (e.manualValues && e.manualValues.length > 0) {
+          manualHtml = `
+            <p><strong>⌨️ Введенные значения:</strong></p>
+            <div class="manual-values-grid" style="margin:6px 0 10px;">
+              ${e.manualValues.map((mv, cIdx) => `
+                <div class="manual-value-chip" style="--chip-idx:${cIdx}">
+                  <span class="mv-label">${mv.label}</span>
+                  <span class="mv-value">${mv.value}</span>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }
+        html += `
+          <div class="history-detail-item" style="--detail-idx:${index}">
+            <p><strong>#${index + 1}</strong> — ${e.weapon || 'Орудие'} (${e.type || 'Элеватор'})</p>
+            ${manualHtml}
+            ${e.isManual ? '' : `<p>📏 Дальность: ${Math.round(e.distance)} м</p>`}
+            ${e.isManual ? '' : `<p>🔢 Заряд: ${e.charge}</p>`}
+            <p>🎯 Элеватор: ${Math.round(e.elevation)}</p>
+            ${e.profileTumbler !== undefined ? `<p>🔘 Тумблер профиля: ${e.profileTumbler}</p>` : ''}
+            ${e.delayTumbler !== undefined ? `<p>⏱ Тумблер задержки: ${e.delayTumbler}</p>` : ''}
+            ${e.isManual ? '' : `<p>⏱ Время полёта: ${e.flightTime || 0} сек</p>`}
+            <p>📐 Поправка на дистанцию: ${Math.round(e.rangeCorr || 0)}</p>
+            <p>📐 Поправка на высоту: ${Math.round(e.heightCorr || 0)}</p>
+            <p>🕒 Время расчёта: ${e.calculatedAt || '—'}</p>
+          </div>
+        `;
+      });
+    } else {
+      let manualHtml = '';
+      if (entry.manualValues && entry.manualValues.length > 0) {
+        manualHtml = `
+          <p style="margin-top:8px;"><strong>⌨️ Введенные значения:</strong></p>
+          <div class="manual-values-grid">
+            ${entry.manualValues.map((mv, cIdx) => `
+              <div class="manual-value-chip" style="--chip-idx:${cIdx}">
+                <span class="mv-label">${mv.label}</span>
+                <span class="mv-value">${mv.value}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+      html = `
+        <p><strong>Орудие:</strong> ${entry.weapon}</p>
+        <p><strong>Тип расчёта:</strong> ${entry.type || 'Элеватор'}</p>
+        ${manualHtml}
+        ${entry.isManual ? '' : `<p><strong>Дальность до цели:</strong> ${Math.round(entry.distance)} м</p>`}
+        ${entry.isManual ? '' : `<p><strong>Своя высота:</strong> ${entry.ownHeight || 0} м</p>`}
+        ${entry.isManual ? '' : `<p><strong>Высота цели:</strong> ${entry.targetHeight || 0} м</p>`}
+        <p><strong>Поправка на дистанцию:</strong> ${Math.round(entry.rangeCorr || 0)}</p>
+        <p><strong>Поправка на высоту:</strong> ${Math.round(entry.heightCorr || 0)}</p>
+        ${entry.isManual ? '' : `<p><strong>Полетное время:</strong> ${entry.flightTime || 0} сек</p>`}
+        ${entry.isManual ? '' : `<p><strong>Заряд:</strong> ${entry.charge}</p>`}
+        <p><strong>Элеватор:</strong> ${Math.round(entry.elevation)}</p>
+        ${entry.profileTumbler !== undefined ? `<p><strong>Тумблер профиля:</strong> ${entry.profileTumbler}</p>` : ''}
+        ${entry.delayTumbler !== undefined ? `<p><strong>Тумблер задержки:</strong> ${entry.delayTumbler}</p>` : ''}
+        <p><strong>Время расчёта:</strong> ${entry.calculatedAt || '—'}</p>
+      `;
+    }
+    container.innerHTML = html;
+    openModalAnimated(modal);
+  }
+
+  window.closeModal = function() {
+    closeModalAnimated(document.getElementById('detail-modal'));
+  };
+
+  async function shareHistoryWithQR() {
+    if (calculationHistory.length === 0) {
+      alert('Нет истории для публикации!');
+      return;
+    }
+
+    try {
+      const result = await saveHistoryToGist(calculationHistory);
+      if (!result.success) {
+        alert('Ошибка сохранения: ' + result.error);
+        return;
+      }
+
+      const baseUrl = window.location.href.split('?')[0];
+      let viewUrl = baseUrl.replace(/app\.html/i, 'veiw.html');
+      if (viewUrl === baseUrl) {
+        viewUrl = baseUrl + '?id=' + result.gistId;
+      } else {
+        viewUrl = viewUrl + '?id=' + result.gistId;
+      }
+
+      document.getElementById('qr-link-display').textContent = viewUrl;
+      const container = document.getElementById('qr-code-container');
+      container.innerHTML = '';
+      try {
+        new QRCode(container, {
+          text: viewUrl,
+          width: 200,
+          height: 200,
+          colorDark: '#1e2b3a',
+          colorLight: '#ffffff'
+        });
+      } catch (e) {
+        container.innerHTML = '<p style="color:red;">Ошибка генерации QR-кода</p>';
+      }
+      openModalAnimated(document.getElementById('qr-modal'));
+    } catch (error) {
+      alert('Ошибка публикации: ' + error.message);
+    }
+  }
+
+  window.closeQRModal = function() {
+    closeModalAnimated(document.getElementById('qr-modal'));
+  };
+
+  async function loadSavedHistory() {
+    const savedGistId = localStorage.getItem('current_gist_id');
+    if (!savedGistId) return;
+    const result = await loadHistoryFromGist(savedGistId);
+    if (result.success && result.history && result.history.length > 0) {
+      calculationHistory = result.history;
+      updateHistoryDisplay(false);
+      console.log('✅ История загружена из Gist:', result.history.length, 'записей');
+    }
+  }
+
+  function loadSharedHistory() {
+    const params = new URLSearchParams(window.location.search);
+    const sharedId = params.get('id') || params.get('shared');
+    if (!sharedId) return;
+
+    const loadingDiv = document.createElement('div');
+    loadingDiv.innerHTML = '<div style="text-align:center;padding:20px;">⏳ Загрузка истории...</div>';
+    document.getElementById('modal-detail').innerHTML = '';
+    document.getElementById('modal-detail').appendChild(loadingDiv);
+    openModalAnimated(document.getElementById('detail-modal'));
+
+    loadHistoryFromGist(sharedId).then(result => {
+      if (result.success && result.history && result.history.length > 0) {
+        showDetailModal(result.history);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else {
+        alert('Не удалось загрузить историю. Возможно, ссылка недействительна.');
+        closeModal();
+      }
+    }).catch(error => {
+      alert('Ошибка загрузки: ' + error.message);
+      closeModal();
+    });
+  }
+
+  function updateUIForTrajectory() {
+    const toggle = document.getElementById('trajectory-toggle');
+    const labelSpan = document.getElementById('trajectory-label');
+    const statusSpan = document.getElementById('trajectory-status');
+    const redpolyBtn = document.getElementById('calculate-redpoly');
+
+    if (currentWeapon === MANUAL_MODE) {
+      labelSpan.innerHTML = '<i class="fas fa-keyboard"></i> Ручной ввод';
+      statusSpan.innerHTML = '⌨️ Ручной ввод';
+      redpolyBtn.style.display = 'none';
+      return;
+    }
+
+    if (!hasWeaponData()) {
+      labelSpan.innerHTML = '<i class="fas fa-chart-line"></i> Нет данных';
+      statusSpan.innerHTML = '⚠️ Заполните данные для орудия';
+      toggle.checked = false;
+      redpolyBtn.style.display = 'none';
+      return;
+    }
+
+    if (isFlatTrajectory) {
+      labelSpan.innerHTML = '<i class="fas fa-chart-line"></i> Настильная стрельба';
+      statusSpan.innerHTML = '🎯 Настильная стрельба';
+      toggle.checked = true;
+    } else {
+      labelSpan.innerHTML = '<i class="fas fa-chart-line"></i> Мортирная стрельба';
+      statusSpan.innerHTML = '⚡ Мортирная стрельба';
+      toggle.checked = false;
+    }
+
+    if (currentWeapon === '2S19' && getCurrentDataSource()) {
+      redpolyBtn.style.display = 'flex';
+    } else {
+      redpolyBtn.style.display = 'none';
+    }
+    updateChargeRanges();
+    validateChargeInput(true);
+    validateDistanceInput();
+  }
+
+  function updateChargeRanges() {
+    const grid = document.getElementById('ranges-grid');
+    grid.innerHTML = '';
+    const src = getCurrentDataSource();
+    if (src && src.ranges) {
+      src.ranges.forEach((r, idx) => {
+        const div = document.createElement('div');
+        div.className = 'range-item';
+        div.style.setProperty('--chip-idx', idx);
+        div.innerHTML = `<span class="charge">Заряд ${r.charge}</span>: ${r.range}`;
+        grid.appendChild(div);
+      });
+    } else {
+      const div = document.createElement('div');
+      div.className = 'range-item';
+      div.innerHTML = '⚠️ Нет данных для выбранного орудия';
+      grid.appendChild(div);
+    }
+  }
+
+  function updateWeaponList() {
+    const list = document.getElementById('weapon-list');
+    list.innerHTML = '';
+    const weapons = getAvailableWeapons();
+    
+    if (weapons.length === 0) {
+      const div = document.createElement('div');
+      div.className = 'weapon-item';
+      div.innerHTML = '⚠️ Нет данных. Заполните mortarData или flatData';
+      list.appendChild(div);
+      return;
+    }
+
+    weapons.forEach((weapon, idx) => {
+      const div = document.createElement('div');
+      div.className = 'weapon-item';
+      div.style.setProperty('--item-idx', idx);
+      div.style.setProperty('--rev-idx', Math.max(0, weapons.length - 1 - idx));
+      if (weapon === currentWeapon) div.classList.add('active');
+      div.setAttribute('data-weapon', weapon);
+
+      const unlocked = isWeaponUnlocked(weapon);
+      if (!unlocked) div.classList.add('locked');
+
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = getWeaponName(weapon);
+      div.appendChild(nameSpan);
+
+      if (!unlocked) {
+        const lockSpan = document.createElement('span');
+        lockSpan.className = 'weapon-lock';
+        lockSpan.textContent = '🔒';
+        div.appendChild(lockSpan);
+      }
+
+      div.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (!isWeaponUnlocked(weapon)) {
+          triggerHaptic([20, 40, 20]);
+          alert('🔒 ' + getWeaponName(weapon) + ' — ' + getRequiredLevelText(weapon) + ' доступа');
+          return;
+        }
+        selectWeapon(weapon);
+        closeWeaponListAnimated();
+      });
+      list.appendChild(div);
+    });
+  }
+
+  function selectWeapon(weapon) {
+    const prevWeapon = currentWeapon;
+    currentWeapon = weapon;
+    const isManual = (weapon === MANUAL_MODE);
+
+    const manualSec = document.getElementById('manual-input-section');
+    const normalSec = document.getElementById('normal-input-section');
+
+    manualSec.style.display = isManual ? 'block' : 'none';
+    normalSec.style.display = isManual ? 'none' : 'block';
+
+    if (prevWeapon !== null && prevWeapon !== weapon) {
+      const targetCard = isManual ? manualSec : normalSec;
+      targetCard.classList.remove('card-MorphIn');
+      void targetCard.offsetWidth;
+      targetCard.classList.add('card-MorphIn');
+      triggerHaptic(10);
+    }
+
+    if (isManual) {
+      document.getElementById('results-mortar').classList.remove('active');
+      document.getElementById('results-redpoly').classList.remove('active');
+      document.getElementById('selected-weapon').innerText = getWeaponName(weapon);
+      updateWeaponList();
+      updateUIForTrajectory();
+      return;
+    }
+
+    if (isFlatTrajectory && !flatData[weapon]) {
+      isFlatTrajectory = false;
+    }
+    if (!isFlatTrajectory && !mortarData[weapon]) {
+      isFlatTrajectory = true;
+    }
+    const src = getCurrentDataSource();
+    document.getElementById('selected-weapon').innerText = src?.name || weapon;
+    updateWeaponList();
+    updateUIForTrajectory();
+    validateDistanceInput();
+  }
+
+  const weapons = getAvailableWeapons();
+  if (weapons.length > 0) {
+    const firstUnlocked = weapons.find(w => w !== MANUAL_MODE && isWeaponUnlocked(w));
+    currentWeapon = firstUnlocked || MANUAL_MODE;
+    if (currentWeapon === MANUAL_MODE) {
+      isFlatTrajectory = false;
+    } else if (mortarData[currentWeapon]) {
+      isFlatTrajectory = false;
+    } else if (flatData[currentWeapon]) {
+      isFlatTrajectory = true;
+    }
+    document.getElementById('selected-weapon').innerText = getWeaponName(currentWeapon);
+    selectWeapon(currentWeapon);
+  }
+
+  document.getElementById('auto-charge-toggle').addEventListener('change', function() {
+    triggerHaptic(8);
+    const isAuto = this.checked;
+    const grp = document.getElementById('charge-input-group');
+    grp.style.display = isAuto ? 'none' : 'block';
+    if (!isAuto) {
+      grp.style.animation = 'fadeSlideDown 0.32s var(--spring-easing) both';
+    }
+    validateDistanceInput();
+  });
+
+  document.getElementById('charge').addEventListener('input', function() {
+    validateChargeInput(true);
+    validateDistanceInput();
+  });
+
+  document.getElementById('charge').addEventListener('change', function() {
+    validateChargeInput(true);
+    validateDistanceInput();
+  });
+
+  document.getElementById('distance').addEventListener('input', function() {
+    validateDistanceInput();
+  });
+
+  document.getElementById('trajectory-toggle').addEventListener('change', function(e) {
+    triggerHaptic(8);
+    isFlatTrajectory = e.target.checked;
+    if (isFlatTrajectory && !flatData[currentWeapon]) {
+      alert('Нет данных для настильной стрельбы у этого орудия');
+      e.target.checked = false;
+      isFlatTrajectory = false;
+    }
+    if (!isFlatTrajectory && !mortarData[currentWeapon]) {
+      alert('Нет данных для мортирной стрельбы у этого орудия');
+      e.target.checked = true;
+      isFlatTrajectory = true;
+    }
+    updateUIForTrajectory();
+  });
+
+  function showResultsAnimated(boxEl) {
+    if (!boxEl) return;
+    boxEl.classList.remove('closing');
+    boxEl.classList.remove('active');
+    void boxEl.offsetWidth;
+    boxEl.classList.add('active');
+  }
+
+  function hideResultsAnimated(boxEl) {
+    if (!boxEl || !boxEl.classList.contains('active')) return;
+    boxEl.classList.remove('active');
+    boxEl.classList.add('closing');
+    setTimeout(function () {
+      boxEl.classList.remove('closing');
+    }, 260);
+  }
+  // ==== КНОПКИ БЫСТРОЙ ПРАВКИ ДАЛЬНОСТИ (-100, -10, +10, +100) ====
+  document.querySelectorAll('.quick-dist-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const distInput = document.getElementById('distance');
+      const delta = parseFloat(this.dataset.delta) || 0;
+      const current = parseFloat(distInput.value) || 0;
+      const next = Math.max(0, Math.round(current + delta));
+      distInput.value = next;
+      triggerHaptic(6);
+      validateDistanceInput();
+    });
+  });
+
+  // ==== РАСЧЁТ ДИАПАЗОНА ЭЛЕВАТОРА И АЗИМУТА ПО РАДИУСУ ПОРАЖЕНИЯ ====
+  function updateSpreadCalculation(baseRes, oh, th, boxId, rSpanId, elevSpanId, azSpanId) {
+    const box = document.getElementById(boxId);
+    const radius = parseFloat(document.getElementById('spread-radius').value) || 0;
+    if (!box || radius <= 0 || baseRes.distance <= 0) {
+      if (box) box.classList.remove('active');
+      return;
+    }
+
+    const rangeObj = getChargeRange(baseRes.charge);
+    const minChargeDist = rangeObj ? rangeObj.min : 1;
+    const maxChargeDist = rangeObj ? rangeObj.max : 30000;
+
+    const dNear = Math.max(minChargeDist, baseRes.distance - radius);
+    const dFar  = Math.min(maxChargeDist, baseRes.distance + radius);
+
+    const resNear = calculateFull(dNear, oh, th, baseRes.charge, true);
+    const resFar  = calculateFull(dFar, oh, th, baseRes.charge, true);
+
+    const elevMin = Math.min(resNear.elevation, resFar.elevation);
+    const elevMax = Math.max(resNear.elevation, resFar.elevation);
+
+    // Сектор по азимуту в тысячных (шкала 6400: 1 рад = 3200 / PI)
+    const azMils = Math.max(1, Math.round(Math.atan2(radius, baseRes.distance) * (3200 / Math.PI)));
+
+    document.getElementById(rSpanId).textContent = Math.round(radius);
+    document.getElementById(elevSpanId).textContent = `${elevMin} – ${elevMax}`;
+    document.getElementById(azSpanId).textContent = `±${azMils} тыс.`;
+    box.classList.add('active');
+  }
+
+  // ==== ПЕРЕКИДНЫЕ ЧАСЫ (SPLIT-FLAP) И ВИЗУАЛЬНАЯ ТРАЕКТОРИЯ ====
+  const flightSim = {
+    rafId: null,
+    running: false,
+    totalSec: 0,
+    startTime: 0,
+    isKrasnopol: false,
+    laserDelaySec: 0,
+    ownHeight: 0,
+    targetHeight: 0,
+    isFlat: false,
+    distance: 0,
+    curve: null
+  };
+
+  function setFlipDigit(unitId, newChar, instant = false) {
+    const unit = document.getElementById(unitId);
+    if (!unit) return;
+
+    const topStatic = unit.querySelector('.flip-top span');
+    const botStatic = unit.querySelector('.flip-bottom span');
+    const current = unit.dataset.val;
+
+    // При первом показе или принудительном сбросе ставим цифру сразу без анимации
+    if (instant || current === undefined) {
+      unit.dataset.val = newChar;
+      unit.querySelectorAll('.flip-leaf-top, .flip-leaf-bottom').forEach(el => el.remove());
+      topStatic.textContent = newChar;
+      botStatic.textContent = newChar;
+      return;
+    }
+
+    if (current === newChar) return;
+    unit.dataset.val = newChar;
+
+    // Завершаем предыдущий перелистывающийся кадр, если цифры меняются быстро
+    unit.querySelectorAll('.flip-leaf-top, .flip-leaf-bottom').forEach(el => el.remove());
+    botStatic.textContent = current;
+
+    const leafTop = document.createElement('div');
+    leafTop.className = 'flip-half flip-leaf-top';
+    leafTop.innerHTML = `<span>${current}</span>`;
+
+    const leafBot = document.createElement('div');
+    leafBot.className = 'flip-half flip-leaf-bottom';
+    leafBot.innerHTML = `<span>${newChar}</span>`;
+
+    topStatic.textContent = newChar;
+    unit.appendChild(leafTop);
+    unit.appendChild(leafBot);
+
+    clearTimeout(unit._flipTimer);
+    unit._flipTimer = setTimeout(() => {
+      botStatic.textContent = newChar;
+      leafTop.remove();
+      leafBot.remove();
+    }, 410);
+  }
+
+  function renderFlipClockSeconds(secFloat, instant = false) {
+    const clamped = Math.max(0, Math.ceil(secFloat));
+    const mins = Math.floor(clamped / 60);
+    const secs = clamped % 60;
+    const str = String(mins).padStart(2, '0') + String(secs).padStart(2, '0');
+    setFlipDigit('flip-m1', str[0], instant);
+    setFlipDigit('flip-m2', str[1], instant);
+    setFlipDigit('flip-s1', str[2], instant);
+    setFlipDigit('flip-s2', str[3], instant);
+  }
+
+  function evalQuadBezier(p0, p1, p2, t) {
+    const mt = 1 - t;
+    return {
+      x: mt * mt * p0.x + 2 * mt * t * p1.x + t * t * p2.x,
+      y: mt * mt * p0.y + 2 * mt * t * p1.y + t * t * p2.y
+    };
+  }
+
+  function buildTrajectorySVG() {
+    const svg = document.getElementById('trajectory-svg');
+    if (!svg) return;
+
+    const box = svg.closest('.trajectory-box');
+    if (box) {
+      box.classList.toggle('krasnopol-mode', flightSim.isKrasnopol);
+    }
+
+    const dh = flightSim.targetHeight - flightSim.ownHeight;
+    const shiftY = Math.max(-22, Math.min(22, dh * 0.08));
+    const p0 = { x: 28, y: 108 + shiftY * 0.5 };
+    const p2 = { x: 292, y: 108 - shiftY * 0.5 };
+
+    const arcLift = flightSim.isFlat ? 44 : 84;
+    const p1 = {
+      x: (p0.x + p2.x) * 0.5,
+      y: Math.min(p0.y, p2.y) - arcLift
+    };
+    flightSim.curve = { p0, p1, p2 };
+
+    const ptLaser = evalQuadBezier(p0, p1, p2, 2 / 3);
+
+    let krasnopolMarkup = '';
+    if (flightSim.isKrasnopol) {
+      krasnopolMarkup = `
+        <line class="traj-laser-line" x1="${ptLaser.x.toFixed(1)}" y1="${ptLaser.y.toFixed(1)}" x2="${ptLaser.x.toFixed(1)}" y2="122" />
+        <circle class="traj-laser-dot" cx="${ptLaser.x.toFixed(1)}" cy="${ptLaser.y.toFixed(1)}" r="4" />
+        <text class="traj-laser-text" x="${ptLaser.x.toFixed(1)}" y="${Math.max(12, ptLaser.y - 8).toFixed(1)}" text-anchor="middle">ГСН (2/3)</text>
+      `;
+    }
+
+    svg.innerHTML = `
+      <line class="traj-axis" x1="14" y1="124" x2="306" y2="124" />
+      <polygon class="traj-terrain" points="${p0.x},${p0.y} ${p2.x},${p2.y} ${p2.x},124 ${p0.x},124" />
+
+      <path class="traj-arc-base" d="M ${p0.x} ${p0.y} Q ${p1.x} ${p1.y} ${p2.x} ${p2.y}" />
+      <path id="traj-progress-path" class="traj-arc-active" d="M ${p0.x} ${p0.y}" />
+
+      ${krasnopolMarkup}
+
+      <circle class="traj-label-own" cx="${p0.x}" cy="${p0.y}" r="4.5" />
+      <text class="traj-label-own" x="${p0.x}" y="${p0.y + 13}" text-anchor="middle">${flightSim.ownHeight}м</text>
+
+      <circle class="traj-label-target" cx="${p2.x}" cy="${p2.y}" r="4.5" />
+      <text class="traj-label-target" x="${p2.x}" y="${p2.y + 13}" text-anchor="middle">${Math.round(flightSim.distance)}м (${flightSim.targetHeight}м)</text>
+
+      <g id="traj-shell-marker" transform="translate(${p0.x}, ${p0.y})">
+        <circle class="traj-shell-core" r="5" />
+        <circle class="traj-shell-halo" r="8.5" />
+      </g>
+    `;
+  }
+
+  function updateTrajectoryProgress(progress) {
+    if (!flightSim.curve) return;
+    const { p0, p1, p2 } = flightSim.curve;
+    const p = Math.max(0, Math.min(1, progress));
+    const cur = evalQuadBezier(p0, p1, p2, p);
+
+    // Де Кастельжо для точной отрисовки пройденной части квадратичной кривой Безье
+    const q0 = {
+      x: p0.x + (p1.x - p0.x) * p,
+      y: p0.y + (p1.y - p0.y) * p
+    };
+    const pathEl = document.getElementById('traj-progress-path');
+    const shellEl = document.getElementById('traj-shell-marker');
+    if (pathEl) {
+      pathEl.setAttribute('d', `M ${p0.x} ${p0.y} Q ${q0.x.toFixed(1)} ${q0.y.toFixed(1)} ${cur.x.toFixed(1)} ${cur.y.toFixed(1)}`);
+    }
+    if (shellEl) {
+      shellEl.setAttribute('transform', `translate(${cur.x.toFixed(1)}, ${cur.y.toFixed(1)})`);
+    }
+  }
+
+  function stopFlightSimulation() {
+    if (flightSim.rafId) {
+      cancelAnimationFrame(flightSim.rafId);
+      flightSim.rafId = null;
+    }
+    flightSim.running = false;
+    const btn = document.getElementById('fire-shot-btn');
+    if (btn) {
+      btn.classList.remove('running');
+      btn.innerHTML = '<i class="fas fa-bomb"></i> Выстрел';
+    }
+  }
+
+  function prepareFlightTracker(res, oh, th, isKrasnopol = false, delayPos = 0) {
+    stopFlightSimulation();
+    flightSim.totalSec = Math.max(1, res.flightTime || 1);
+    flightSim.isKrasnopol = isKrasnopol;
+    flightSim.laserDelaySec = isKrasnopol ? (delayPos * 6) : 0;
+    flightSim.ownHeight = oh;
+    flightSim.targetHeight = th;
+    flightSim.isFlat = isFlatTrajectory;
+    flightSim.distance = res.distance;
+
+    const card = document.getElementById('flight-tracker-card');
+    const pill = document.getElementById('flight-status-pill');
+    const kBar = document.getElementById('krasnopol-flight-bar');
+    const kTimer = document.getElementById('krasnopol-laser-timer');
+
+    pill.className = 'flight-status-pill';
+    pill.textContent = 'Готов к выстрелу';
+
+    if (isKrasnopol && currentWeapon === '2S19') {
+      kBar.style.display = 'flex';
+      kTimer.textContent = `через ${flightSim.laserDelaySec} сек (тумбл. ${delayPos})`;
+    } else {
+      kBar.style.display = 'none';
+      kTimer.textContent = '';
+    }
+
+    renderFlipClockSeconds(flightSim.totalSec, true);
+    buildTrajectorySVG();
+    updateTrajectoryProgress(0);
+    card.classList.add('active');
+  }
+
+  document.getElementById('fire-shot-btn').addEventListener('click', function() {
+    if (flightSim.running) {
+      // Повторное нажатие сбрасывает таймер в исходное состояние
+      stopFlightSimulation();
+      renderFlipClockSeconds(flightSim.totalSec);
+      updateTrajectoryProgress(0);
+      const pill = document.getElementById('flight-status-pill');
+      pill.className = 'flight-status-pill';
+      pill.textContent = 'Готов к выстрелу';
+      if (flightSim.isKrasnopol) {
+        document.getElementById('krasnopol-laser-timer').textContent = `через ${flightSim.laserDelaySec} сек`;
+      }
+      triggerHaptic(10);
+      return;
+    }
+
+    flightSim.running = true;
+    flightSim.startTime = performance.now();
+    this.classList.add('running');
+    this.innerHTML = '<i class="fas fa-stop"></i> Сброс отсчёта';
+
+    const pill = document.getElementById('flight-status-pill');
+    pill.className = 'flight-status-pill flying';
+    pill.textContent = 'Снаряд в полёте';
+    triggerHaptic([18, 30, 18]);
+
+    function tick(now) {
+      if (!flightSim.running) return;
+      const elapsed = (now - flightSim.startTime) / 1000;
+      const remaining = Math.max(0, flightSim.totalSec - elapsed);
+      const progress = Math.min(1, elapsed / flightSim.totalSec);
+
+      renderFlipClockSeconds(remaining);
+      updateTrajectoryProgress(progress);
+
+      if (flightSim.isKrasnopol) {
+        const kTimer = document.getElementById('krasnopol-laser-timer');
+        const toLaser = flightSim.laserDelaySec - elapsed;
+        if (toLaser > 0) {
+          kTimer.textContent = `через ${Math.ceil(toLaser)} сек`;
+        } else {
+          kTimer.textContent = 'ЛАЗЕР ВКЛЮЧЁН (ГСН)';
+          pill.className = 'flight-status-pill laser';
+          pill.textContent = 'Наведение по лазеру';
+        }
+      }
+
+      if (progress < 1) {
+        flightSim.rafId = requestAnimationFrame(tick);
+      } else {
+        stopFlightSimulation();
+        pill.className = 'flight-status-pill impact';
+        pill.textContent = 'Разрыв у цели!';
+        triggerHaptic([35, 50, 35]);
+      }
+    }
+
+    flightSim.rafId = requestAnimationFrame(tick);
+  });
+
+  document.getElementById('calculate-mortar').addEventListener('click', function() {
+    if (currentWeapon === MANUAL_MODE) return;
+    if (!hasWeaponData()) {
+      alert('Нет данных для выбранного орудия! Заполните mortarData или flatData.');
+      return;
+    }
+    if (!document.getElementById('auto-charge-toggle').checked && !validateChargeInput(true)) {
+      alert('Некорректный номер заряда для выбранного орудия!');
+      return;
+    }
+   
+    if (!validateDistanceInput()) {
+      alert('Некорректная дальность! Проверьте введенное значение.');
+      return;
+    }
+    let dist = parseFloat(document.getElementById('distance').value);
+    let oh = parseFloat(document.getElementById('own-height').value) || 0;
+    let th = parseFloat(document.getElementById('target-height').value) || 0;
+    let auto = document.getElementById('auto-charge-toggle').checked;
+    let charge = auto ? null : (document.getElementById('charge').value.trim() === '' ? null : parseInt(document.getElementById('charge').value, 10));
+    try {
+      let res = calculateFull(dist, oh, th, charge);
+      document.getElementById('manual-entered-values').style.display = 'none';
+      document.getElementById('results-redpoly').classList.remove('active');
+      showResultsAnimated(document.getElementById('results-mortar'));
+
+      animateOdometerValue(document.getElementById('mortar-mode'), isFlatTrajectory ? 'Настильный' : 'Мортирный');
+      animateOdometerValue(document.getElementById('mortar-charge'), res.charge);
+      animateOdometerValue(document.getElementById('mortar-flight-time'), res.flightTime + ' сек');
+      animateOdometerValue(document.getElementById('mortar-elevation'), res.elevation);
+      document.getElementById('redpoly-spread-box').classList.remove('active');
+      updateSpreadCalculation(res, oh, th, 'mortar-spread-box', 'mortar-spread-r', 'mortar-spread-elev', 'mortar-spread-az');
+      prepareFlightTracker(res, oh, th, false, 0);
+
+      triggerHaptic([10, 40, 14]);
+      addToHistory(res, 'Элеватор');
+      lastCalcMode = 'mortar';
+    } catch (e) {
+      alert('Ошибка расчета: ' + e.message);
+    }
+  });
+
+  document.getElementById('calculate-manual').addEventListener('click', function() {
+    const v = validateManualInput();
+    if (!v) return;
+
+    const res = calculateManualFormula(v);
+    const chips = buildManualChipsList(v);
+
+    document.getElementById('results-mortar').classList.remove('active');
+    document.getElementById('results-redpoly').classList.remove('active');
+    showResultsAnimated(document.getElementById('results-manual'));
+
+    animateOdometerValue(document.getElementById('manual-res-elevation'), Math.round(res.elevation));
+    triggerHaptic([10, 40, 14]);
+
+    addToHistory({
+      distance: v.distance,
+      charge: null,
+      elevation: Math.round(res.elevation),
+      flightTime: null,
+      ownHeight: v.ownHeight,
+      targetHeight: v.targetHeight,
+      rangeCorrection: res.rangeCorr,
+      heightCorrection: res.heightCorr
+    }, 'Элеватор', null, { manualValues: chips });
+  });
+
+  document.getElementById('reset-manual').addEventListener('click', function() {
+    triggerHaptic(10);
+    ['manual-elev-top', 'manual-elev-bottom', 'manual-range-step',
+     'manual-distance', 'manual-elev-range'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('manual-own-height').value = '';
+    document.getElementById('manual-target-height').value = '';
+    document.getElementById('manual-height-ratio').value = '';
+    hideResultsAnimated(document.getElementById('results-manual'));
+  });
+
+  document.getElementById('manual-elev-top').addEventListener('input', function() {
+    let val = parseFloat(this.value);
+    if (!isNaN(val) && val < MANUAL_ELEV_MIN) this.value = MANUAL_ELEV_MIN;
+    if (!isNaN(val) && val > MANUAL_ELEV_MAX) this.value = MANUAL_ELEV_MAX;
+  });
+  document.getElementById('manual-elev-bottom').addEventListener('input', function() {
+    let val = parseFloat(this.value);
+    if (!isNaN(val) && val < MANUAL_ELEV_MIN) this.value = MANUAL_ELEV_MIN;
+    if (!isNaN(val) && val > MANUAL_ELEV_MAX) this.value = MANUAL_ELEV_MAX;
+  });
+
+  function spinDialWheel(wheelId, activeNum, totalPositions = 8) {
+    const wheel = document.getElementById(wheelId);
+    if (!wheel) return;
+    const stepDeg = 360 / totalPositions;
+
+    if (!wheel.dataset.built) {
+      wheel.innerHTML = '';
+      for (let i = 1; i <= totalPositions; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'dial-slot';
+        slot.dataset.num = String(i);
+        slot.style.transform = `rotate(${(i - 1) * stepDeg}deg)`;
+        slot.innerHTML = `<span>${i}</span>`;
+        wheel.appendChild(slot);
+      }
+      wheel.dataset.built = '1';
+      wheel.dataset.angle = '0';
+    }
+
+    wheel.querySelectorAll('.dial-slot').forEach(slot => {
+      slot.classList.toggle('active', parseInt(slot.dataset.num, 10) === activeNum);
+    });
+
+    const prevAngle = parseFloat(wheel.dataset.angle || '0');
+    const targetMod = (-(activeNum - 1) * stepDeg) % 360;
+    const prevMod = prevAngle % 360;
+    let delta = targetMod - prevMod;
+    if (delta > 0) delta -= 360;
+    const nextAngle = prevAngle + delta - 360;
+
+    wheel.dataset.angle = String(nextAngle);
+    wheel.style.transition = 'none';
+    wheel.style.transform = `rotate(${prevAngle}deg)`;
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        wheel.style.transition = 'transform 1.15s cubic-bezier(0.2, 1.14, 0.32, 1)';
+        wheel.style.transform = `rotate(${nextAngle}deg)`;
+      });
+    });
+  }
+
+  document.getElementById('calculate-redpoly').addEventListener('click', function() {
+    if (currentWeapon !== '2S19') {
+      alert('Краснополь доступен только для орудия 2С19 Мста-С');
+      return;
+    }
+    if (!getCurrentDataSource()) {
+      alert('Нет данных для выбранного режима стрельбы 2С19!');
+      return;
+    }
+    if (!document.getElementById('auto-charge-toggle').checked && !validateChargeInput(true)) {
+      alert('Некорректный номер заряда для выбранного орудия!');
+      return;
+    }
+    if (!validateDistanceInput()) {
+      alert('Некорректная дальность!');
+      return;
+    }
+    let dist = parseFloat(document.getElementById('distance').value);
+    let oh = parseFloat(document.getElementById('own-height').value) || 0;
+    let th = parseFloat(document.getElementById('target-height').value) || 0;
+    let auto = document.getElementById('auto-charge-toggle').checked;
+    let charge = auto ? null : (document.getElementById('charge').value.trim() === '' ? null : parseInt(document.getElementById('charge').value, 10));
+    try {
+      let res = calculateFull(dist, oh, th, charge);
+
+      const profiles = [
+        { t: 1, angle: '70-80°', elev: 1333 },
+        { t: 2, angle: '70°',    elev: 1244 },
+        { t: 3, angle: '60°',    elev: 1067 },
+        { t: 4, angle: '50°',    elev: 889  },
+        { t: 5, angle: '40°',    elev: 711  },
+        { t: 6, angle: '30°',    elev: 533  },
+        { t: 7, angle: '25°',    elev: 444  },
+        { t: 8, angle: '20°',    elev: 356  }
+      ];
+      let closest = profiles.reduce((p, c) => Math.abs(c.elev - res.elevation) < Math.abs(p.elev - res.elevation) ? c : p);
+      let delay = Math.min(8, Math.max(1, Math.round((2 / 3 * res.flightTime) / 6)));
+
+      document.getElementById('results-mortar').classList.remove('active');
+      showResultsAnimated(document.getElementById('results-redpoly'));
+
+      animateOdometerValue(document.getElementById('redpoly-charge'), res.charge);
+      animateOdometerValue(document.getElementById('redpoly-flight-time'), res.flightTime + ' сек');
+      animateOdometerValue(document.getElementById('redpoly-elevator'), res.elevation);
+
+      spinDialWheel('dial-wheel-profile', closest.t, 8);
+      spinDialWheel('dial-wheel-delay', delay, 8);
+
+      document.getElementById('dial-sub-profile').textContent = closest.angle;
+      document.getElementById('dial-sub-delay').textContent = (delay * 6) + ' сек';
+      document.getElementById('mortar-spread-box').classList.remove('active');
+      updateSpreadCalculation(res, oh, th, 'redpoly-spread-box', 'redpoly-spread-r', 'redpoly-spread-elev', 'redpoly-spread-az');
+      prepareFlightTracker(res, oh, th, true, delay);
+
+      triggerHaptic([12, 35, 16]);
+      lastCalcMode = 'redpoly';
+      addToHistory(res, 'Краснополь', {
+        profileTumbler: closest.t,
+        delayTumbler: delay
+      });
+    } catch (e) {
+      alert('Ошибка расчета: ' + e.message);
+    }
+  });
+  // ==== ЛОГИКА КОРРЕКТИРОВКИ ОГНЯ ПО СТОРОНАМ СВЕТА (С / Ю / З / В) ====
+  (function initCardinalCorrection() {
+    const accordion = document.getElementById('corr-accordion');
+    const toggleBtn = document.getElementById('corr-toggle-btn');
+    const nsSeg = document.getElementById('corr-ns-seg');
+    const ewSeg = document.getElementById('corr-ew-seg');
+    const applyBtn = document.getElementById('corr-apply-btn');
+    const clearBtn = document.getElementById('corr-clear-btn');
+    const outputBox = document.getElementById('corr-output');
+
+    if (!accordion || !toggleBtn) return;
+
+    let dirNS = 'N';
+    let dirEW = 'W';
+
+    toggleBtn.addEventListener('click', function() {
+      accordion.classList.toggle('open');
+      triggerHaptic(8);
+    });
+
+    nsSeg.querySelectorAll('.corr-seg-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        nsSeg.querySelectorAll('.corr-seg-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        dirNS = this.dataset.dir;
+        triggerHaptic(6);
+      });
+    });
+
+    ewSeg.querySelectorAll('.corr-seg-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        ewSeg.querySelectorAll('.corr-seg-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        dirEW = this.dataset.dir;
+        triggerHaptic(6);
+      });
+    });
+
+    clearBtn.addEventListener('click', function() {
+      document.getElementById('corr-ns-val').value = '';
+      document.getElementById('corr-ew-val').value = '';
+      outputBox.classList.remove('active');
+      triggerHaptic(8);
+    });
+
+    applyBtn.addEventListener('click', function() {
+      const distInput = document.getElementById('distance');
+      const azInput = document.getElementById('corr-azimuth');
+
+      const d0 = parseFloat(distInput.value);
+      const az0 = parseFloat(azInput.value);
+
+      if (isNaN(d0) || d0 <= 0) {
+        alert('Сначала укажите текущую дальность до цели!');
+        return;
+      }
+      if (isNaN(az0) || az0 < 0 || az0 > 6400) {
+        alert('Введите текущий азимут орудия от 0 до 6400 тыс.');
+        return;
+      }
+
+      const nsMeters = Math.abs(parseFloat(document.getElementById('corr-ns-val').value) || 0);
+      const ewMeters = Math.abs(parseFloat(document.getElementById('corr-ew-val').value) || 0);
+
+      if (nsMeters === 0 && ewMeters === 0) {
+        alert('Укажите величину сдвига (Север/Юг или Запад/Восток) в метрах.');
+        return;
+      }
+
+      const dN = (dirNS === 'N' ? 1 : -1) * nsMeters;
+      const dE = (dirEW === 'E' ? 1 : -1) * ewMeters;
+
+      // Перевод азимута из шкалы 6400 тыс. в радианы (0 = Север, 1600 = Восток)
+      const rad0 = (az0 * 2 * Math.PI) / 6400;
+      const e0 = d0 * Math.sin(rad0);
+      const n0 = d0 * Math.cos(rad0);
+
+      const e1 = e0 + dE;
+      const n1 = n0 + dN;
+
+      const d1 = Math.round(Math.hypot(e1, n1));
+      let rad1 = Math.atan2(e1, n1);
+      if (rad1 < 0) rad1 += 2 * Math.PI;
+      const az1 = Math.round((rad1 * 6400) / (2 * Math.PI)) % 6400;
+
+      // Кратчайший доворот по азимуту в пределах [-3200, +3200]
+      let diffAz = ((az1 - Math.round(az0) + 3200 + 6400) % 6400) - 3200;
+      const diffSign = diffAz > 0 ? `+${diffAz} тыс. (правее)` : (diffAz < 0 ? `${diffAz} тыс. (левее)` : '0 тыс.');
+      const distDelta = d1 - Math.round(d0);
+      const distSign = distDelta >= 0 ? `+${distDelta}` : `${distDelta}`;
+
+      // Обновляем дальность и азимут, оставляя введённые сдвиги на месте
+      distInput.value = d1;
+      azInput.value = az1;
+
+      outputBox.innerHTML = `
+        <strong>Новая дальность:</strong> ${d1} м (${distSign} м)<br>
+        <strong>Новый азимут:</strong> ${az1} тыс. (${diffSign})
+      `;
+      outputBox.classList.add('active');
+
+      validateDistanceInput();
+      triggerHaptic([12, 25, 12]);
+
+      // Автоматически пересчитываем баллистику в активном режиме
+      if (lastCalcMode === 'redpoly' && currentWeapon === '2S19') {
+        document.getElementById('calculate-redpoly').click();
+      } else {
+        document.getElementById('calculate-mortar').click();
+      }
+    });
+  })();
+
+  document.getElementById('reset-calculator').addEventListener('click', function() {
+    triggerHaptic(10);
+    document.getElementById('distance').value = '';
+    document.getElementById('own-height').value = '';
+    document.getElementById('target-height').value = '';
+    document.getElementById('charge').value = '';
+    validateDistanceInput();
+    hideResultsAnimated(document.getElementById('results-mortar'));
+    hideResultsAnimated(document.getElementById('results-redpoly'));
+    stopFlightSimulation();
+    document.getElementById('flight-tracker-card').classList.remove('active');
+    document.getElementById('mortar-spread-box').classList.remove('active');
+    document.getElementById('redpoly-spread-box').classList.remove('active');
+    document.getElementById('spread-radius').value = '';
+    document.getElementById('corr-ns-val').value = '';
+    document.getElementById('corr-ew-val').value = '';
+    document.getElementById('corr-output').classList.remove('active');
+  });
+
+  document.getElementById('full-restart').addEventListener('click', function() {
+    showAppConfirm('Полный перезапуск? Вся история будет удалена.', function() {
+      calculationHistory = [];
+      updateHistoryDisplay(false);
+      localStorage.removeItem('current_gist_id');
+      
+      if (weapons.length > 0) {
+        const firstUnlocked = weapons.find(w => w !== MANUAL_MODE && isWeaponUnlocked(w));
+        currentWeapon = firstUnlocked || MANUAL_MODE;
+        selectWeapon(currentWeapon);
+      }
+      updateUIForTrajectory();
+      document.getElementById('distance').value = '';
+      document.getElementById('own-height').value = '';
+      document.getElementById('target-height').value = '';
+      document.getElementById('charge').value = '';
+      document.getElementById('auto-charge-toggle').checked = true;
+      document.getElementById('charge-input-group').style.display = 'none';
+      validateDistanceInput();
+      hideResultsAnimated(document.getElementById('results-mortar'));
+      hideResultsAnimated(document.getElementById('results-redpoly'));
+      stopFlightSimulation();
+      document.getElementById('flight-tracker-card').classList.remove('active');
+      document.getElementById('mortar-spread-box').classList.remove('active');
+      document.getElementById('redpoly-spread-box').classList.remove('active');
+      document.getElementById('spread-radius').value = '';
+      document.getElementById('corr-azimuth').value = '';
+      document.getElementById('corr-ns-val').value = '';
+      document.getElementById('corr-ew-val').value = '';
+      document.getElementById('corr-output').classList.remove('active');
+    });
+  });
+
+  document.getElementById('share-history-btn').addEventListener('click', shareHistoryWithQR);
+
+  document.getElementById('weapon-btn').addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleWeaponListAnimated();
+  });
+
+  document.addEventListener('click', function(e) {
+    const list = document.getElementById('weapon-list');
+    const btn = document.getElementById('weapon-btn');
+    if (list.classList.contains('show') && 
+        !list.contains(e.target) && 
+        !btn.contains(e.target)) {
+      closeWeaponListAnimated();
+    }
+  });
+
+  loadSavedHistory();
+  loadSharedHistory();
+
+  updateUIForTrajectory();
+  validateDistanceInput();
+}
+
+// ====================================================================
+// ==================== ДЕЛАЕМ ФУНКЦИИ ГЛОБАЛЬНЫМИ ==================
+// ====================================================================
+
+window.login = login;
+window.initializeApp = initializeApp;
+window.closeModal = function() {
+  closeModalAnimated(document.getElementById('detail-modal'));
+};
+window.closeQRModal = function() {
+  closeModalAnimated(document.getElementById('qr-modal'));
+};
+
+// ====================================================================
+// ==== СОБСТВЕННОЕ УВЕДОМЛЕНИЕ / ДИАЛОГ КАЛЬКУЛЯТОРА ====
+// ====================================================================
+
+let appConfirmCallback = null;
+
+function setAlertBody(content, body) {
+  if (typeof body === 'string') {
+    content.innerHTML = '<p>' + body + '</p>';
+  } else if (Array.isArray(body)) {
+    const items = body.map(item => '<li>' + item + '</li>').join('');
+    content.innerHTML = '<ul>' + items + '</ul>';
+  } else if (body && body.nodeType) {
+    content.innerHTML = '';
+    content.appendChild(body);
+  } else {
+    content.innerHTML = '<p>' + String(body == null ? '' : body) + '</p>';
+  }
+}
+
+function showAppAlert(body) {
+  const modal = document.getElementById('alert-modal');
+  setAlertBody(document.getElementById('alert-body'), body);
+  document.getElementById('alert-title').textContent = 'Ошибка';
+  document.getElementById('alert-ok-btn').style.display = '';
+  document.getElementById('alert-confirm-btn').style.display = 'none';
+  document.getElementById('alert-cancel-btn').style.display = 'none';
+  openModalAnimated(modal);
+}
+
+function showAppConfirm(message, onConfirm) {
+  const modal = document.getElementById('alert-modal');
+  setAlertBody(document.getElementById('alert-body'), message);
+  document.getElementById('alert-title').textContent = 'Подтверждение';
+  document.getElementById('alert-ok-btn').style.display = 'none';
+  document.getElementById('alert-confirm-btn').style.display = '';
+  document.getElementById('alert-cancel-btn').style.display = '';
+  appConfirmCallback = onConfirm || null;
+  openModalAnimated(modal);
+}
+
+function closeAppAlert() {
+  appConfirmCallback = null;
+  closeModalAnimated(document.getElementById('alert-modal'));
+}
+
+window.alert = function (msg) { showAppAlert(msg); };
+window.showAppAlert = showAppAlert;
+window.showAppConfirm = showAppConfirm;
+window.onAlertOk = closeAppAlert;
+window.closeAppAlert = closeAppAlert;
+
+(function () {
+  const okBtn = document.getElementById('alert-ok-btn');
+  const confirmBtn = document.getElementById('alert-confirm-btn');
+  const cancelBtn = document.getElementById('alert-cancel-btn');
+  const alertModal = document.getElementById('alert-modal');
+  const detailModal = document.getElementById('detail-modal');
+  const qrModal = document.getElementById('qr-modal');
+
+  if (okBtn) okBtn.addEventListener('click', closeAppAlert);
+
+  if (confirmBtn) {
+    confirmBtn.addEventListener('click', function () {
+      const cb = appConfirmCallback;
+      closeAppAlert();
+      if (typeof cb === 'function') cb();
+    });
+  }
+  if (cancelBtn) cancelBtn.addEventListener('click', closeAppAlert);
+
+  [alertModal, detailModal, qrModal].forEach(function (m) {
+    if (!m) return;
+    m.addEventListener('click', function (e) {
+      const contentBox = m.querySelector('.modal-content');
+      if (contentBox && !contentBox.contains(e.target)) {
+        if (m.id === 'alert-modal') closeAppAlert();
+        else closeModalAnimated(m);
+      }
+    });
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      if (alertModal && alertModal.style.display === 'flex') closeAppAlert();
+      if (detailModal && detailModal.style.display === 'flex') closeModalAnimated(detailModal);
+      if (qrModal && qrModal.style.display === 'flex') closeModalAnimated(qrModal);
+    }
+  });
+})();
+
+console.log('✅ Артиллерийский калькулятор загружен. Версия: ' + APP_VERSION);
+</script>
+<script src="js/theme.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('./sw.js').catch(function () {});
+    });
+  }
+</script>
+</body>
+</html>
